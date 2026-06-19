@@ -1,6 +1,6 @@
 """SMS Sync Relay Server — deploy on a public VPS.
 
-Pairs PC (host) with Android (client) via a 4-digit room code.
+Pairs PC (host) with Android (client) via a 6-digit room code.
 Forwards all WebSocket messages between paired connections.
 """
 
@@ -79,16 +79,25 @@ class RelayServer:
 
         role = data.get("type", "")
         if role == "host":
-            await self._handle_host(ws)
+            await self._handle_host(ws, data)
         elif role == "client":
             await self._handle_client(ws, data.get("room", ""))
 
-    async def _handle_host(self, ws: ServerConnection):
-        # Generate unique room code
-        while True:
-            code = f"{random.randint(0, 9999):04d}"
-            if code not in self.rooms or self.rooms[code].host is None:
-                break
+    async def _handle_host(self, ws: ServerConnection, data: dict):
+        # Accept optional code from host, otherwise generate 6-digit code
+        host_code = data.get("code", "")
+        if host_code and len(host_code) == 6 and host_code.isdigit():
+            code = host_code
+            if code in self.rooms and self.rooms[code].host is not None:
+                import json
+                await ws.send(json.dumps({"type": "error", "reason": "code_taken"}))
+                await ws.close()
+                return
+        else:
+            while True:
+                code = f"{random.randint(100000, 999999):06d}"
+                if code not in self.rooms or self.rooms[code].host is None:
+                    break
 
         room = Room(code)
         room.host = ws
