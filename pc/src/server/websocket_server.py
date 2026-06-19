@@ -147,8 +147,8 @@ class WebSocketServer:
                     logger.exception("on_client_connected callback failed")
 
             # Step 4: Main message loop with heartbeat
-            missed_pings = 0
-            ping_task = asyncio.create_task(self._ping_loop(websocket))
+            pong_event = asyncio.Event()
+            ping_task = asyncio.create_task(self._ping_loop(websocket, pong_event))
 
             try:
                 async for raw in websocket:
@@ -158,7 +158,7 @@ class WebSocketServer:
                         continue
 
                     if msg.type == "pong":
-                        missed_pings = 0
+                        pong_event.set()  # signal the ping task
                         continue
 
                     if msg.type == "sms_code":
@@ -212,18 +212,32 @@ class WebSocketServer:
                 except Exception:
                     logger.exception("on_client_disconnected callback failed")
 
-    async def _ping_loop(self, websocket: ServerConnection) -> None:
-        """Send periodic pings and monitor for timeout."""
+    async def _ping_loop(
+        self, websocket: ServerConnection, pong_event: asyncio.Event
+    ) -> None:
+        """Send periodic pings and disconnect if no pong is received."""
         missed = 0
         while True:
             await asyncio.sleep(PING_INTERVAL)
             try:
                 await websocket.send(build_message("ping"))
-                # Wait for pong — handled in the main message loop.
-                # We track missed pings there: if a pong arrives,
-                # the counter resets. Here we just increment.
-                # But we can't easily share state across the two coroutines
-                # without a lock. Simpler approach: just track in _handle_connection.
-                pass
+                # Wait for the handler to signal a pong response
+                try:
+                    await asyncio.wait_for(pong_event.wait(), timeout=PONG_TIMEOUT)
+                    pong_event.clear()
+                    missed = 0
+                except asyncio.TimeoutError:
+                    missed += 1
+                    logger.debug(
+                        "Missed pong %d/%d from %s",
+                        missed, MAX_MISSED_PINGS, websocket.remote_address,
+                    )
+                    if missed >= MAX_MISSED_PINGS:
+                        logger.warning(
+                            "Client %s missed %d pings, closing",
+                            websocket.remote_address, missed,
+                        )
+                        await websocket.close()
+                        return
             except Exception:
                 break

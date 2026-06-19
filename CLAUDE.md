@@ -1,4 +1,4 @@
-# SMS Sync — 手机验证码同步到 PC (v2.0)
+# SMS Sync — 手机验证码同步到 PC (v2.1)
 
 将 Android 手机收到的短信验证码实时同步到 Windows PC，自动复制到剪贴板并弹出 Windows Toast 通知。
 
@@ -20,11 +20,11 @@ Android 端:
   ├─ SmsAccessibilityService (无障碍，小米兜底)
   ├─ CodeExtractor (10层正则 + 发送方提取，过滤非验证码短信)
   ├─ QR Scanner (CameraX + ML Kit)
-  └─ Foreground Service (后台保活 + 断联自动重连)
+  └─ Foreground Service (后台保活 + 断联自动重连，通知栏可点击回应用)
 
 PC 端:
   ├─ Clipboard (pyperclip) + Windows Toast (windows_toasts)
-  ├─ 双模式配对弹窗 — 二维码 / 6位匹配码 (tkinter 暗色主题)
+  ├─ 双模式配对弹窗 — 二维码 / 6位匹配码 (tkinter 暗色主题，零频闪切屏)
   ├─ System Tray (pystray, 红/黄/绿 状态)
   └─ 云服务器中继客户端 (默认 ws://101.37.15.16:8765)
 ```
@@ -33,7 +33,7 @@ PC 端:
 - **配对方式**:
   - 局域网：PC 生成二维码 (含 IP + 持久化 token) → 手机扫码
   - 匹配码：PC 自动生成 6 位匹配码 → 手机输入 → VPS 中继配对
-- **心跳**: 30s ping/pong (LAN)，中继模式依赖 WebSocket keep-alive
+- **心跳**: 30s ping/pong (LAN) — 已修复：使用 asyncio.Event 跨协程追踪 missed pings，超时主动断开
 - **重连**: connectionId 追踪 + 指数退避，重启自动重连 (LAN)
 
 ## 短信接收方案
@@ -244,3 +244,40 @@ SmsSync-v2.0.exe --relay ws://VPS:8765  # 指定中继地址
 | Android SDK | platform 34, build-tools 34.0.0 |
 | Android 手机 | 8.0+ (API 26+) |
 | PC | Windows 10/11 |
+
+## v2.1 更新记录 (2026-06-20)
+
+### PC 配对弹窗重写
+
+- **Grid 叠层切屏**：三帧预建于同一 grid cell，`grid_remove()` + `grid()` + `tkraise()` 切屏。窗口仅在首次显示时 resize，切换帧无 pack_forget/pack 抖动
+- **PIL 矢量图标**：二维码 (四角取景框) 和匹配码 (钥匙) 从 `assets/qr.png` 和 `assets/key.png` 加载，可替换
+- **匹配码数字块**：6 个独立深色方块，验证码输入框风格，点击复制
+- **连接状态**：模式选择页/二维码页底部实时显示 `● 手机已连接 ✓` / `● 等待手机连接...`
+- **窗口位置保持**：首次居中，`_refit_window(first_time=True)` 之后保留用户拖动位置
+- **文案优化**："局域网二维码"→"二维码"，"通过服务器中继"已移除，图标/字体调整
+
+### 线程安全
+
+- **UI 更新队列**：worker 线程 (LAN/relay) 通过 `queue.Queue` 推送回调，主线程 `after(100ms)` 轮询执行，替代直接 `after()` 调用
+- **轮询容错**：单个回调异常不影响后续更新
+
+### WebSocket 心跳修复
+
+- `_ping_loop` 使用 `asyncio.Event` 跨协程追踪 pong 响应
+- 超过 `MAX_MISSED_PINGS` 次未收到 pong 主动断开僵尸连接
+
+### 错误处理
+
+- 连接失败 → 用户友好中文提示 (代理/防火墙/超时)
+- 匹配码页面 → 错误时显示重试按钮
+
+### Android
+
+- **通知栏点击回应用**：`buildNotification` 添加 `PendingIntent` + MainActivity `launchMode="singleTop"`
+- **卡片式配对按钮**：`PairingCard` (OutlinedCard + 图标 + 标题 + 副标题 + ChevronRight)
+- **匹配码输入**：6 位纯数字 + 折叠高级设置 + 剪贴板粘贴 + 5s 超时
+
+### 构建
+
+- PyInstaller 命令新增 `--add-data "assets;assets"` 打包 PNG 图标
+- launcher.py 首行设置 `SetCurrentProcessExplicitAppUserModelID("SMS Sync")`

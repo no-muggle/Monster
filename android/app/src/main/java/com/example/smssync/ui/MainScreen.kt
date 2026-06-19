@@ -30,7 +30,7 @@ import androidx.core.content.ContextCompat
 import com.example.smssync.data.CodeEntry
 import com.example.smssync.data.ConnectionState
 import com.example.smssync.data.ConnectionStateHolder
-import com.example.smssync.data.PreferencesManager
+
 import com.example.smssync.service.WebSocketService
 import com.example.smssync.ui.theme.*
 import java.text.SimpleDateFormat
@@ -41,13 +41,8 @@ import java.util.*
 fun MainScreen(
     connectionState: ConnectionState, lastCode: String?, lastSender: String?,
     isDarkTheme: Boolean, onScanQrClick: () -> Unit, onRelayClick: () -> Unit, onDisconnectClick: () -> Unit, onToggleTheme: () -> Unit,
-    refreshKey: Int,
 ) {
     val context = LocalContext.current
-    val preferencesManager = remember { PreferencesManager(context) }
-    var pairedPcName by remember { mutableStateOf("") }
-
-    LaunchedEffect(Unit) { preferencesManager.savedPairing.collect { pairedPcName = it.pcName } }
 
     val hasSmsPerm = ContextCompat.checkSelfPermission(context, Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_GRANTED
     val hasAccessibility = try { Settings.Secure.getString(context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)?.contains("SmsAccessibilityService") == true } catch (_: Exception) { false }
@@ -62,7 +57,7 @@ fun MainScreen(
     }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Spacer(Modifier.height(8.dp))
-            ConnectionCard(connectionState, pairedPcName)
+            ConnectionCard(connectionState)
             CodeCard(lastCode, lastSender)
 
             if (!hasSmsPerm || !hasAccessibility) {
@@ -123,12 +118,12 @@ fun MainScreen(
 }
 
 @Composable
-private fun ConnectionCard(state: ConnectionState, pcName: String) {
+private fun ConnectionCard(state: ConnectionState) {
     val (clr, txt) = when (state) { ConnectionState.CONNECTED -> Color(0xFF4CAF50) to "已连接"; ConnectionState.CONNECTING -> Color(0xFFFF9800) to "连接中..."; ConnectionState.RECONNECTING -> Color(0xFFFF9800) to "重连中..."; ConnectionState.DISCONNECTED -> Color(0xFFF44336) to "未连接" }
     Card(Modifier.fillMaxWidth(), RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(2.dp)) {
         Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(14.dp).clip(CircleShape).background(clr)); Spacer(Modifier.width(14.dp))
-            Column { Text(txt, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold); if (pcName.isNotBlank() && state == ConnectionState.CONNECTED) Text("配对: $pcName", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)) }
+            Column { Text(txt, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
         }
     }
 }

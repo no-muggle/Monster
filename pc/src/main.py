@@ -38,6 +38,27 @@ logging.basicConfig(
 logger = logging.getLogger("sms-sync")
 
 
+# Map Python exception class names to user-friendly Chinese messages
+_RELAY_ERROR_MESSAGES: dict[str, str] = {
+    "ConnectionResetError": "网络连接被重置，请检查代理或防火墙设置",
+    "ConnectionRefusedError": "网络连接失败，请检查代理或防火墙设置",
+    "OSError": "网络不可达，请检查网络连接",
+    "TimeoutError": "连接超时，请检查网络或代理设置",
+    "InvalidURI": "连接地址配置错误",
+    "SecurityError": "SSL/TLS 证书错误",
+}
+
+
+def _friendly_relay_error(cls: str, message: str) -> str:
+    """Return a user-friendly Chinese error message for relay failures."""
+    if cls in _RELAY_ERROR_MESSAGES:
+        return _RELAY_ERROR_MESSAGES[cls]
+    # Fallback: return the exception type for debugging
+    if message:
+        return f"连接失败 ({cls}: {message[:80]})"
+    return f"连接失败 ({cls})"
+
+
 class App:
     """Main application controller.
 
@@ -89,12 +110,17 @@ class App:
     def _on_connected(self) -> None:
         logger.info("Android client connected")
         self._tray.set_status(ConnectionStatus.CONNECTED)
+        if self._dialog:
+            self._dialog.update_connection_status(True)
 
     def _on_disconnected(self) -> None:
         logger.info("Android client disconnected")
         self._tray.set_status(ConnectionStatus.WAITING)
         if self._dialog:
-            self._dialog.update_relay_status("error:连接断开，请重试")
+            self._dialog.update_connection_status(False)
+            # If relay mode was active, show error on matching code screen with retry
+            if self._relay is not None:
+                self._dialog.update_relay_status("error:连接已断开，请重试")
 
     def _add_firewall_rule(self) -> None:
         """Add a Windows Firewall inbound rule for the WebSocket port."""
@@ -170,7 +196,7 @@ class App:
         if not self._relay_url:
             logger.error("No relay URL configured")
             if self._dialog:
-                self._dialog.update_relay_status("error:未配置中继服务器地址")
+                self._dialog.update_relay_status("error:服务未配置，请联系开发者")
             return
 
         relay = RelayHostClient(self._relay_url)
@@ -201,7 +227,8 @@ class App:
                 else:
                     logger.exception("Relay error")
                     if dialog:
-                        dialog.update_relay_status(f"error:连接失败 — {e}")
+                        msg = _friendly_relay_error(cls, str(e))
+                        dialog.update_relay_status(f"error:{msg}")
             finally:
                 pending = asyncio.all_tasks(loop)
                 for t in pending:
@@ -276,19 +303,10 @@ class App:
 
         if self._use_relay:
             logger.info("Mode: RELAY — %s", self._relay_url)
-            self._run_relay()
         else:
             logger.info("Mode: LOCAL — %s:%d", self._host, self._port)
-            self._run_local()
+            self._log_lan_info()
 
-    def _run_relay(self) -> None:
-        """Relay mode: show pairing dialog with matching code option.
-
-        The dialog generates a 6-digit matching code. When the user
-        confirms, _start_relay_with_code() connects to the relay server
-        and registers with that code.
-        """
-        logger.info("Mode: RELAY — %s", self._relay_url)
         self._tray.set_status(ConnectionStatus.WAITING)
         self._show_dialog()
         if self._shutdown_event.is_set():
@@ -301,33 +319,23 @@ class App:
         finally:
             self._shutdown()
 
-    def _run_local(self) -> None:
-        """Local mode: show QR code (LAN server already started by run())."""
-        logger.info("LAN IP: %s, Port: %d", self._host, self._port)
+    def _log_lan_info(self) -> None:
+        """Log LAN IP details for debugging connectivity issues."""
         logger.info("PC Name: %s", self._server.pc_name)
-
         from .network.lan_ip import get_all_local_ips
         all_ips = get_all_local_ips()
         if len(all_ips) > 1:
             logger.info("All detected IPs: %s", ", ".join(all_ips))
-
         if self._host == "127.0.0.1":
             logger.warning("Could not detect LAN IP. Ensure you are on a network.")
 
-        self._tray.set_status(ConnectionStatus.WAITING)
-        self._show_dialog()
-        if self._shutdown_event.is_set():
-            return
-
-        try:
-            self._tray.run()
-        except KeyboardInterrupt:
-            pass
-        finally:
-            self._shutdown()
-
 
 def main() -> None:
+    # Set AppUserModelID early so Windows Toast shows "SMS Sync"
+    if sys.platform == "win32":
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("SMS Sync")
+
     relay_url = "ws://101.37.15.16:8765"  # default cloud relay
     if "--relay" in sys.argv:
         idx = sys.argv.index("--relay")

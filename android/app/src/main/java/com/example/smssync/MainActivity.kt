@@ -36,7 +36,6 @@ class MainActivity : ComponentActivity() {
     private var showScanner by mutableStateOf(false)
     private var showRelay by mutableStateOf(false)
     private var isDarkTheme by mutableStateOf(false)
-    private var refreshKey by mutableStateOf(0)
     private val preferencesManager by lazy { PreferencesManager(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -97,16 +96,10 @@ class MainActivity : ComponentActivity() {
                             isDarkTheme = !isDarkTheme
                             lifecycleScope.launch { preferencesManager.setDarkTheme(isDarkTheme) }
                         },
-                        refreshKey = refreshKey,
                     )
                 }
             }
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        refreshKey++ // trigger permission re-check in UI
     }
 
     private fun onQrScanned(info: PairingInfo) {

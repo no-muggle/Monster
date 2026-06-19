@@ -104,7 +104,7 @@ class TrayIcon:
             ),
             Menu.SEPARATOR,
             MenuItem(
-                "显示配对二维码",
+                "显示配对窗口",
                 lambda: self.on_show_qr() if self.on_show_qr else None,
             ),
             Menu.SEPARATOR,

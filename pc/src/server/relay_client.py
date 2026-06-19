@@ -60,15 +60,30 @@ class RelayHostClient:
         return self._room_code
 
     async def wait_for_client(self):
-        """Wait for Android client to join."""
+        """Wait for Android client to join.
+
+        Returns:
+            True once the client joins.
+
+        Raises:
+            Exception: If the relay sends an error (e.g. timeout) or an
+                       unexpected message type.
+        """
         raw = await self._ws.recv()
         data = json.loads(raw)
-        if data.get("type") == "client_joined":
+        msg_type = data.get("type", "")
+
+        if msg_type == "error":
+            reason = data.get("reason", "unknown")
+            raise Exception(f"Relay error: {reason}")
+
+        if msg_type == "client_joined":
             logger.info("Client joined room %s", self._room_code)
             if self.on_connected:
                 self.on_connected()
             return True
-        return False
+
+        raise Exception(f"Unexpected message while waiting for client: {msg_type}")
 
     async def listen(self):
         """Listen for messages from relay (from Android) and forward."""
