@@ -11,7 +11,17 @@
       "Bash(C:/Users/cuibo/AppData/Local/Android/Sdk/platform-tools/adb shell *)",
       "Read(//tmp/**)",
       "Bash(pip install *)",
-      "Bash(python -m PyInstaller --onefile --console --name \"SmsSync\" --icon assets/icon.ico --add-data \"assets/icon.png;assets\" --hidden-import tkinter --hidden-import PIL --hidden-import pystray --hidden-import windows_toasts --hidden-import pyperclip --hidden-import qrcode --hidden-import websockets src/main.py)"
+      "Bash(python -m PyInstaller --onefile --console --name \"SmsSync\" --icon assets/icon.ico --add-data \"assets/icon.png;assets\" --hidden-import tkinter --hidden-import PIL --hidden-import pystray --hidden-import windows_toasts --hidden-import pyperclip --hidden-import qrcode --hidden-import websockets src/main.py)",
+      "Bash(python relay_server.py)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill *)",
+      "Bash(awk '{print $NF}')",
+      "Bash(xargs -I{} powershell -Command \"Stop-Process -Id {} -Force\")",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(C:/Users/cuibo/.claude/skills/subagent-driven-development/scripts/review-package cd65a4939bc207e96294e779319b170dfb833e8c *)",
+      "Bash(C:/Users/cuibo/.claude/skills/subagent-driven-development/scripts/task-brief *)",
+      "Bash(python -c ' *)"
     ]
   },
   "skillOverrides": {}

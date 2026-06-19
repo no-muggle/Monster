@@ -132,7 +132,6 @@ messsge/
 | Token 失效 | 删除 `%APPDATA%/sms-sync/pairing_token.txt` 重新扫码 |
 | 小米收不到验证码 | 开 RECEIVE_SMS + 无障碍服务，锁定 APP + 电池无限制 |
 | 无障碍掉线 | 小米杀后台，锁定 APP + 电池无限制 |
-| 匹配码连接超时 | 检查云服务器 relay_server.py 运行中，安全组开放 8765 |
 | 非验证码短信误发 | 已过滤，只发含验证码关键词的短信 |
 
 ## License

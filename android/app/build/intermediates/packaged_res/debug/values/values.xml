@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="accessibility_service_description">读取短信通知以自动提取验证码并同步到电脑</string>
-    <string name="app_name">SMS Sync</string>
-    <style name="Theme.SmsSync" parent="android:Theme.Material.Light.NoActionBar"/>
-</resources>
