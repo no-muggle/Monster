@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMS Sync — 手机验证码实时同步到 PC</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: #0F0F1A; color: #C8C8D8; line-height: 1.65;
+  }
+  a { color: #60A5FA; text-decoration: none; }
+  a:hover { color: #93BBF0; }
+
+  /* Hero */
+  .hero {
+    text-align: center; padding: 100px 24px 80px;
+    background: radial-gradient(ellipse at 50% 0%, #1A1A3E 0%, #0F0F1A 70%);
+  }
+  .hero h1 {
+    font-size: clamp(28px, 6vw, 52px); font-weight: 700;
+    background: linear-gradient(135deg, #60A5FA, #A78BFA);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; margin-bottom: 16px;
+  }
+  .hero p { font-size: 18px; color: #8888A0; max-width: 520px; margin: 0 auto 32px; }
+  .hero .badge {
+    display: inline-block; padding: 6px 16px; border-radius: 20px;
+    background: #1E1E3A; color: #60A5FA; font-size: 13px; font-weight: 500;
+    border: 1px solid #2A2A55; margin-bottom: 24px;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 28px; border-radius: 10px; font-size: 15px;
+    font-weight: 600; transition: all .2s; border: none; cursor: pointer;
+  }
+  .btn-primary { background: #2563EB; color: #fff; }
+  .btn-primary:hover { background: #3B82F6; }
+  .btn-outline {
+    background: transparent; color: #C8C8D8;
+    border: 1px solid #3E3E55;
+  }
+  .btn-outline:hover { border-color: #60A5FA; color: #fff; }
+  .btn-group { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  /* Sections */
+  section { padding: 80px 24px; }
+  .container { max-width: 960px; margin: 0 auto; }
+  .section-title {
+    text-align: center; font-size: 28px; font-weight: 700;
+    color: #E8E8F0; margin-bottom: 12px;
+  }
+  .section-sub {
+    text-align: center; color: #8888A0; margin-bottom: 48px; font-size: 15px;
+  }
+
+  /* Feature grid */
+  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .feature-card {
+    background: #16162A; border: 1px solid #252545; border-radius: 12px;
+    padding: 28px 24px; transition: border-color .2s;
+  }
+  .feature-card:hover { border-color: #3E3E75; }
+  .feature-icon { font-size: 28px; margin-bottom: 14px; }
+  .feature-card h3 { font-size: 17px; color: #E8E8F0; margin-bottom: 8px; }
+  .feature-card p { font-size: 14px; color: #8888A0; }
+
+  /* Steps */
+  .steps { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; }
+  .step {
+    flex: 1; min-width: 200px; max-width: 280px;
+    text-align: center; padding: 32px 20px;
+    background: #16162A; border: 1px solid #252545; border-radius: 12px;
+  }
+  .step-num {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #2563EB; color: #fff; font-weight: 700; font-size: 18px;
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-bottom: 16px;
+  }
+  .step h3 { font-size: 16px; color: #E8E8F0; margin-bottom: 6px; }
+  .step p { font-size: 13px; color: #8888A0; }
+
+  /* Download */
+  .download-card {
+    background: #16162A; border: 1px solid #252545; border-radius: 12px;
+    padding: 28px 24px; display: flex; align-items: center;
+    gap: 20px; flex-wrap: wrap;
+  }
+  .download-card + .download-card { margin-top: 16px; }
+  .dl-platform { font-size: 13px; color: #8888A0; }
+  .dl-name { font-size: 18px; color: #E8E8F0; font-weight: 600; }
+
+  /* Footer */
+  footer {
+    text-align: center; padding: 40px 24px; color: #555570; font-size: 13px;
+    border-top: 1px solid #1E1E35;
+  }
+  footer a { color: #66668A; }
+
+  /* Screenshot placeholder */
+  .screenshot {
+    max-width: 360px; margin: 0 auto 48px; border-radius: 12px;
+    border: 1px solid #252545; overflow: hidden;
+  }
+  .screenshot-inner {
+    background: #16162A; padding: 40px; text-align: center;
+    color: #555570; font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="badge">v2.1 — Android + Windows</div>
+  <h1>SMS Sync</h1>
+  <p>手机收到验证码，PC 自动复制到剪贴板并弹出桌面通知。局域网直连，零延迟。</p>
+  <div class="btn-group">
+    <a class="btn btn-primary" href="#download">下载 PC 客户端</a>
+    <a class="btn btn-outline" href="#download">下载 Android APK</a>
+  </div>
+</header>
+
+<!-- Features -->
+<section id="features">
+  <div class="container">
+    <h2 class="section-title">功能特性</h2>
+    <p class="section-sub">专为验证码场景优化，简洁可靠</p>
+    <div class="features">
+      <div class="feature-card">
+        <div class="feature-icon">📱</div>
+        <h3>双模式配对</h3>
+        <p>同一 WiFi 扫码连接，或输入 6 位匹配码通过云服务器中继，跨网络也能用</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔔</div>
+        <h3>Windows 桌面通知</h3>
+        <p>验证码到达即时弹出 Toast 通知，点击复制按钮直接粘贴，无需手动操作</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3>静默接收</h3>
+        <p>后台自动读取短信验证码，无需打开手机。支持小米等国产手机无障碍方案</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <h3>自动重连</h3>
+        <p>PC 重启或网络波动后自动恢复连接，token 持久化无需重复扫码</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌐</div>
+        <h3>云中继支持</h3>
+        <p>内置公共中继服务器，手机和 PC 不在同一网络也能同步</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📋</div>
+        <h3>剪贴板 + 历史</h3>
+        <p>自动复制验证码到剪贴板，手机端保存最近 5 条历史记录，支持重发</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section id="how" style="background:#0D0D1F;">
+  <div class="container">
+    <h2 class="section-title">使用流程</h2>
+    <p class="section-sub">30 秒完成配对，之后全自动</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>PC 启动应用</h3>
+        <p>下载运行 SmsSync.exe，弹出配对窗口</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>手机扫码配对</h3>
+        <p>安装 APK，扫描 PC 上的二维码完成配对</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>自动同步</h3>
+        <p>手机收到验证码 → PC 自动弹出通知并复制</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Download -->
+<section id="download">
+  <div class="container">
+    <h2 class="section-title">下载</h2>
+    <p class="section-sub">Windows 10/11 · Android 8.0+</p>
+    <div class="download-card">
+      <div style="font-size:32px;">💻</div>
+      <div style="flex:1;">
+        <div class="dl-name">SMS Sync for Windows</div>
+        <div class="dl-platform">v2.1 · Windows 10/11 · 便携 exe</div>
+      </div>
+      <a class="btn btn-primary" href="https://github.com/no-muggle/Monster/releases">下载 .exe</a>
+    </div>
+    <div class="download-card">
+      <div style="font-size:32px;">📱</div>
+      <div style="flex:1;">
+        <div class="dl-name">SMS Sync for Android</div>
+        <div class="dl-platform">v2.1 · Android 8.0+ · APK</div>
+      </div>
+      <a class="btn btn-outline" href="https://github.com/no-muggle/Monster/releases">下载 .apk</a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <p>SMS Sync · <a href="https://github.com/no-muggle/Monster">GitHub</a> · MIT License</p>
+</footer>
+
+</body>
+</html>
