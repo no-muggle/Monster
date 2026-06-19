@@ -56,6 +56,7 @@ class PairingDialog:
         self._code_frame: tk.Frame | None = None
         self._status_label: tk.Label | None = None
         self._code_label: tk.Label | None = None
+        self._retry_button: tk.Button | None = None
 
         # Callbacks
         self.on_start_relay: Callable[[str], None] | None = None
@@ -296,6 +297,16 @@ class PairingDialog:
             )
             self._status_label.pack()
 
+            # Retry button (hidden by default, shown on error)
+            self._retry_button = tk.Button(
+                body, text="重试",
+                font=("Microsoft YaHei UI", 9),
+                bg="#F44336", fg="#FFFFFF",
+                activebackground="#D32F2F", activeforeground="#FFFFFF",
+                relief="flat", cursor="hand2", padx=20, pady=4,
+                command=lambda: self._on_matching_code_selected(),
+            )
+
         else:
             # Update the code label if re-entering
             if self._code_label:
@@ -326,9 +337,13 @@ class PairingDialog:
                 self._status_label.configure(
                     text=f"✗ {msg}", fg="#F44336"
                 )
+                if self._retry_button is not None:
+                    self._retry_button.pack(pady=(8, 0))
             else:
                 text, color = status_map.get(status, (status, TEXT_SECONDARY))
                 self._status_label.configure(text=text, fg=color)
+                if self._retry_button is not None:
+                    self._retry_button.pack_forget()
 
         self._window.after(0, _update)
 

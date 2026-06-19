@@ -1,3 +1,5 @@
+# DEPRECATED: Replaced by pairing_dialog.py. This file is kept for reference
+# and will be removed in a future release. Do not import.
 """QR code dialog for pairing the Android app."""
 
 from __future__ import annotations

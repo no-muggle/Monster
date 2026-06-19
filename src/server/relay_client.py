@@ -1,6 +1,6 @@
 """Relay mode: connects to a public relay server (VPS) as host.
 
-Shows a 4-digit room code that the Android user enters to pair.
+Shows a 6-digit room code that the Android user enters to pair.
 """
 
 from __future__ import annotations

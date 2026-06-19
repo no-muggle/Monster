@@ -15,7 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
-private const val DEFAULT_RELAY_URL = "wss://"
+private const val DEFAULT_RELAY_URL = "wss://your-server.com:8765"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

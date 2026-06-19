@@ -62,12 +62,6 @@ class App:
             self._server.on_code_received = self._notifier.notify_code
             self._server.on_client_connected = self._on_connected
             self._server.on_client_disconnected = self._on_disconnected
-        else:
-            self._relay = RelayHostClient(relay_url)
-            self._relay.on_message = self._on_relay_message
-            self._relay.on_connected = self._on_connected
-            self._relay.on_disconnected = self._on_disconnected
-            self._relay.on_code_received = self._on_room_code
         self._tray = TrayIcon()
         self._dialog: PairingDialog | None = None
 
@@ -154,6 +148,10 @@ class App:
 
     def _start_relay_with_code(self, code: str) -> None:
         """Start relay connection with a pre-generated matching code."""
+        if self._relay and self._relay.is_connected:
+            return
+        if self._server_thread and self._server_thread.is_alive():
+            return
         if not self._relay_url:
             logger.error("No relay URL configured")
             if self._dialog:
