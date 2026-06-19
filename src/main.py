@@ -20,7 +20,7 @@ from .network.lan_ip import get_lan_ip
 from .notification.notifier import Notifier
 from .server.relay_client import RelayHostClient
 from .server.websocket_server import WebSocketServer
-from .ui.qr_dialog import QrDialog
+from .ui.pairing_dialog import PairingDialog
 from .ui.tray_icon import ConnectionStatus, TrayIcon
 
 # Configure logging
@@ -69,13 +69,13 @@ class App:
             self._relay.on_disconnected = self._on_disconnected
             self._relay.on_code_received = self._on_room_code
         self._tray = TrayIcon()
-        self._qr_dialog: QrDialog | None = None
+        self._dialog: PairingDialog | None = None
 
         self._loop: asyncio.AbstractEventLoop | None = None
         self._server_thread: threading.Thread | None = None
         self._shutdown_event = threading.Event()
 
-        self._tray.on_show_qr = self._show_qr
+        self._tray.on_show_qr = self._show_dialog
         self._tray.on_quit = self._shutdown
 
     def _on_room_code(self, code: str) -> None:
@@ -135,28 +135,70 @@ class App:
                 self._port, self._port,
             )
 
-    def _show_qr(self) -> None:
+    def _show_dialog(self) -> None:
+        """Show the pairing dialog. Handles both LAN and matching-code modes."""
         try:
-            if self._use_relay and self._relay and self._relay.room_code:
-                self._qr_dialog = QrDialog(
-                    host=self._relay_url,
-                    port=0,
-                    token=self._relay.room_code,
-                    pc_name="云服务器模式",
-                    is_relay=True,
+            if self._dialog is None or not self._dialog.is_showing():
+                self._dialog = PairingDialog(
+                    lan_host=self._host,
+                    lan_port=self._port,
+                    lan_token=self._token,
+                    pc_name=self._server.pc_name if self._server else self._host,
+                    relay_url=self._relay_url,
                 )
-            elif not self._use_relay:
-                self._qr_dialog = QrDialog(
-                    host=self._host,
-                    port=self._port,
-                    token=self._token,
-                    pc_name=self._server.pc_name,
-                )
-            else:
-                return
-            self._qr_dialog.show()
+                # Wire matching code callback
+                self._dialog.on_start_relay = self._start_relay_with_code
+            self._dialog.show()
         except Exception:
-            logger.exception("Failed to show QR dialog")
+            logger.exception("Failed to show pairing dialog")
+
+    def _start_relay_with_code(self, code: str) -> None:
+        """Start relay connection with a pre-generated matching code."""
+        if not self._relay_url:
+            logger.error("No relay URL configured")
+            if self._dialog:
+                self._dialog.update_relay_status("error:未配置中继服务器地址")
+            return
+
+        self._relay = RelayHostClient(self._relay_url)
+        self._relay.on_message = self._on_relay_message
+        self._relay.on_connected = self._on_connected
+        self._relay.on_disconnected = self._on_disconnected
+
+        self._loop = asyncio.new_event_loop()
+
+        def relay_loop():
+            asyncio.set_event_loop(self._loop)
+            try:
+                # Connect with pre-generated code
+                self._loop.run_until_complete(self._relay.start(code))
+                # Update dialog: waiting for client
+                if self._dialog:
+                    self._dialog.update_relay_status("waiting")
+                # Wait for client to join
+                self._loop.run_until_complete(self._relay.wait_for_client())
+                if self._dialog:
+                    self._dialog.update_relay_status("connected")
+                # Listen for messages
+                self._loop.create_task(self._relay.listen())
+                self._loop.run_forever()
+            except Exception as e:
+                logger.exception("Relay error")
+                if self._dialog:
+                    self._dialog.update_relay_status(f"error:连接失败 — {e}")
+            finally:
+                pending = asyncio.all_tasks(self._loop)
+                for t in pending:
+                    t.cancel()
+                self._loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                self._loop.close()
+
+        self._server_thread = threading.Thread(target=relay_loop, daemon=True)
+        self._server_thread.start()
+
+        # Show connecting status
+        if self._dialog:
+            self._dialog.update_relay_status("connecting")
 
     def _shutdown(self) -> None:
         """Graceful shutdown sequence."""
@@ -174,9 +216,9 @@ class App:
             except Exception:
                 pass
 
-        # Close QR dialog if open
-        if self._qr_dialog is not None:
-            self._qr_dialog.close()
+        # Close pairing dialog if open
+        if self._dialog is not None:
+            self._dialog.close()
 
         # Stop tray icon
         self._tray.stop()
@@ -194,42 +236,15 @@ class App:
             self._run_local()
 
     def _run_relay(self) -> None:
-        """Relay mode: connect to VPS, show room code."""
-        self._loop = asyncio.new_event_loop()
+        """Relay mode: show pairing dialog with matching code option.
 
-        def relay_loop():
-            asyncio.set_event_loop(self._loop)
-            try:
-                self._loop.run_until_complete(self._relay.start())
-                self._loop.run_until_complete(self._relay.wait_for_client())
-                self._loop.create_task(self._relay.listen())
-                self._loop.run_forever()
-            except Exception:
-                logger.exception("Relay error")
-            finally:
-                pending = asyncio.all_tasks(self._loop)
-                for t in pending:
-                    t.cancel()
-                self._loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
-                self._loop.close()
-
-        self._server_thread = threading.Thread(target=relay_loop, daemon=True)
-        self._server_thread.start()
-
-        # Wait for room code (relay connects async)
-        import time
-        for _ in range(30):
-            if self._relay and self._relay.room_code:
-                break
-            time.sleep(0.5)
-
-        if self._relay and self._relay.room_code:
-            self._tray.set_status(ConnectionStatus.WAITING)
-            self._show_qr()
-        else:
-            logger.error("Relay connection failed — no room code received")
-            self._tray.set_status(ConnectionStatus.STOPPED)
-            return
+        The dialog generates a 6-digit matching code. When the user
+        confirms, _start_relay_with_code() connects to the relay server
+        and registers with that code.
+        """
+        logger.info("Mode: RELAY — %s", self._relay_url)
+        self._tray.set_status(ConnectionStatus.WAITING)
+        self._show_dialog()
 
         try:
             self._tray.run()
@@ -273,7 +288,7 @@ class App:
         self._server_thread.start()
 
         self._tray.set_status(ConnectionStatus.WAITING)
-        self._show_qr()
+        self._show_dialog()
 
         try:
             self._tray.run()
