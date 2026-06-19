@@ -32,8 +32,6 @@ object CodeExtractor {
         Regex("""安全(?:码|口令)\D{0,10}(\d{4,8})"""),
         // Strategy 10: "授权码"
         Regex("""授权码\D{0,10}(\d{4,8})"""),
-        // Strategy 11: Standalone 4-8 digit number as last resort
-        Regex("""(?<!\d)(\d{4,8})(?!\d)"""),
     )
 
     /**

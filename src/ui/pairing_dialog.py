@@ -12,21 +12,22 @@ from PIL import Image, ImageTk
 
 logger = logging.getLogger(__name__)
 
-# Colors
-HEADER_BG = "#1A1A2E"
+# Colors — dark theme
+HEADER_BG = "#12121E"
 HEADER_FG = "#FFFFFF"
-BODY_BG = "#FFFFFF"
-TEXT_PRIMARY = "#1A1A2E"
-TEXT_SECONDARY = "#888899"
-CARD_BG = "#FFFFFF"
-CARD_BORDER = "#E0E0E0"
-CARD_HOVER_BG = "#F5F7FF"
-CODE_COLOR = "#7C5CFC"
-CODE_BG = "#F0F0F8"
-SUCCESS_GREEN = "#4CAF50"
-DIVIDER_COLOR = "#E0E0E0"
+BODY_BG = "#1E1E2E"
+TEXT_PRIMARY = "#E8E8F0"
+TEXT_SECONDARY = "#9A9AB0"
+CARD_BG = "#2A2A3E"
+CARD_BORDER = "#3E3E55"
+CARD_HOVER_BG = "#323250"
+CODE_COLOR = "#60A5FA"
+CODE_BG = "#2A2240"
+SUCCESS_GREEN = "#4ADE80"
+DIVIDER_COLOR = "#3E3E55"
+ERR_RED = "#F87171"
 
-WINDOW_WIDTH = 360
+WINDOW_WIDTH = 460
 ARROW_RIGHT = "→"  # →
 ARROW_LEFT = "←"   # ←
 
@@ -48,6 +49,7 @@ class PairingDialog:
         self._pc_name = pc_name
         self._relay_url = relay_url
         self._matching_code: str | None = None
+        self._relay_connected: bool = False
 
         self._window: tk.Tk | None = None
         self._photo: ImageTk.PhotoImage | None = None
@@ -60,6 +62,21 @@ class PairingDialog:
 
         # Callbacks
         self.on_start_relay: Callable[[str], None] | None = None
+
+    # ------------------------------------------------------------------
+    # Window sizing
+    # ------------------------------------------------------------------
+
+    def _refit_window(self) -> None:
+        """Resize window to fit current screen content, then lock size."""
+        self._window.resizable(True, True)
+        self._window.update_idletasks()
+        w = max(self._window.winfo_reqwidth(), WINDOW_WIDTH)
+        h = self._window.winfo_reqheight()
+        sw = self._window.winfo_screenwidth()
+        sh = self._window.winfo_screenheight()
+        self._window.geometry(f"{w}x{h}+{(sw-w)//2}+{(sh-h)//2}")
+        self._window.resizable(False, False)
 
     # ------------------------------------------------------------------
     # Header builder
@@ -107,6 +124,7 @@ class PairingDialog:
             self._build_mode_screen(self._mode_frame)
 
         self._mode_frame.pack(fill=tk.BOTH, expand=True)
+        self._refit_window()
 
     def _build_mode_screen(self, parent: tk.Frame) -> None:
         """Build the two-card mode selection layout."""
@@ -173,22 +191,12 @@ class PairingDialog:
                 pass
 
     def _bind_card_hover(self, card: tk.Frame) -> None:
-        """Add hover effect to a card."""
+        """Add hover highlight to card border."""
         def on_enter(e):
-            card.configure(bg=CARD_HOVER_BG)
-            for child in card.winfo_children():
-                try:
-                    child.configure(bg=CARD_HOVER_BG)
-                except Exception:
-                    pass
+            card.configure(highlightbackground=SUCCESS_GREEN, highlightthickness=2)
 
         def on_leave(e):
-            card.configure(bg=CARD_BG)
-            for child in card.winfo_children():
-                try:
-                    child.configure(bg=CARD_BG)
-                except Exception:
-                    pass
+            card.configure(highlightbackground=CARD_BORDER, highlightthickness=1)
 
         card.bind("<Enter>", on_enter)
         card.bind("<Leave>", on_leave)
@@ -215,7 +223,7 @@ class PairingDialog:
 
             qr_image = self._generate_qr_image()
             self._photo = ImageTk.PhotoImage(qr_image)
-            qr_box = tk.Frame(body, bg="#E0E0E0", padx=3, pady=3)
+            qr_box = tk.Frame(body, bg=DIVIDER_COLOR, padx=3, pady=3)
             qr_box.pack()
             tk.Label(qr_box, image=self._photo, bg="#FFFFFF").pack()
 
@@ -236,13 +244,19 @@ class PairingDialog:
                      bg=BODY_BG, fg=SUCCESS_GREEN).pack()
 
         self._qr_frame.pack(fill=tk.BOTH, expand=True)
+        self._refit_window()
 
     # ------------------------------------------------------------------
     # Matching code screen
     # ------------------------------------------------------------------
 
     def _on_matching_code_selected(self) -> None:
-        """User clicked matching code card — generate code and show code screen."""
+        """User clicked matching code card — generate code or show existing."""
+        # If already connected, just show the existing code — don't regenerate
+        if self._relay_connected and self._matching_code:
+            self._show_code_screen()
+            return
+
         # Generate 6-digit code
         self._matching_code = f"{random.randint(100000, 999999):06d}"
         logger.info("Generated matching code: %s", self._matching_code)
@@ -251,6 +265,37 @@ class PairingDialog:
         # Notify main.py to start relay connection
         if self.on_start_relay:
             self.on_start_relay(self._matching_code)
+
+    def _copy_matching_code(self) -> None:
+        """Copy the matching code to clipboard and show toast."""
+        if not self._matching_code:
+            return
+        try:
+            import pyperclip
+            pyperclip.copy(self._matching_code)
+            self._show_toast("已复制到剪贴板 ✓")
+        except Exception:
+            pass
+
+    def _show_toast(self, msg: str) -> None:
+        """Show a brief toast popup near the code label."""
+        if not self._window:
+            return
+        toast = tk.Toplevel(self._window)
+        toast.overrideredirect(True)
+        toast.attributes("-topmost", True)
+        toast.configure(bg="#333355")
+        tk.Label(toast, text=msg,
+                 font=("Microsoft YaHei UI", 10),
+                 bg="#333355", fg="#FFFFFF",
+                 padx=16, pady=8).pack()
+        # Position near center of parent
+        self._window.update_idletasks()
+        px = self._window.winfo_rootx() + self._window.winfo_width() // 2
+        py = self._window.winfo_rooty() + self._window.winfo_height() // 2 + 80
+        toast.update_idletasks()
+        toast.geometry(f"+{px-toast.winfo_width()//2}+{py}")
+        self._window.after(1800, toast.destroy)
 
     def _show_code_screen(self) -> None:
         """Show the matching code display screen."""
@@ -261,33 +306,33 @@ class PairingDialog:
             self._code_frame = tk.Frame(self._window, bg=BODY_BG)
             self._build_header(self._code_frame, "匹配码连接", show_back=True)
 
-            body = tk.Frame(self._code_frame, bg=BODY_BG, padx=30, pady=20)
+            body = tk.Frame(self._code_frame, bg=BODY_BG, padx=30, pady=30)
             body.pack(fill=tk.BOTH, expand=True)
 
             tk.Label(body, text="在手机上输入此匹配码",
                      font=("Microsoft YaHei UI", 10),
-                     bg=BODY_BG, fg=TEXT_SECONDARY).pack(pady=(0, 20))
+                     bg=BODY_BG, fg=TEXT_SECONDARY).pack(pady=(0, 32))
 
-            # Code display card
-            code_card = tk.Frame(body, bg=CODE_BG, padx=30, pady=20)
+            # Code display card — clickable to copy
+            code_card = tk.Frame(body, bg=CODE_BG, padx=36, pady=32, cursor="hand2")
             code_card.pack()
+            display_code = " ".join(self._matching_code)
             self._code_label = tk.Label(
-                code_card, text=self._matching_code,
-                font=("Consolas", 48, "bold"),
+                code_card, text=display_code,
+                font=("Consolas", 44, "bold"),
                 bg=CODE_BG, fg=CODE_COLOR,
             )
             self._code_label.pack()
-            tk.Label(code_card, text="匹配码",
-                     font=("Microsoft YaHei UI", 9),
-                     bg=CODE_BG, fg=TEXT_SECONDARY).pack()
+            self._code_label.bind("<Button-1>", lambda e: self._copy_matching_code())
+            code_card.bind("<Button-1>", lambda e: self._copy_matching_code())
 
             # Server address
             if self._relay_url:
                 tk.Label(body, text=f"服务器: {self._relay_url}",
                          font=("Consolas", 8),
-                         bg=BODY_BG, fg=TEXT_SECONDARY).pack(pady=(12, 4))
+                         bg=BODY_BG, fg=TEXT_SECONDARY).pack(pady=(20, 6))
 
-            tk.Frame(body, bg=DIVIDER_COLOR, height=1).pack(fill=tk.X, pady=(10, 10))
+            tk.Frame(body, bg=DIVIDER_COLOR, height=1).pack(fill=tk.X, pady=(16, 16))
 
             # Status
             self._status_label = tk.Label(
@@ -301,8 +346,8 @@ class PairingDialog:
             self._retry_button = tk.Button(
                 body, text="重试",
                 font=("Microsoft YaHei UI", 9),
-                bg="#F44336", fg="#FFFFFF",
-                activebackground="#D32F2F", activeforeground="#FFFFFF",
+                bg=ERR_RED, fg="#FFFFFF",
+                activebackground="#DC2626", activeforeground="#FFFFFF",
                 relief="flat", cursor="hand2", padx=20, pady=4,
                 command=lambda: self._on_matching_code_selected(),
             )
@@ -310,9 +355,11 @@ class PairingDialog:
         else:
             # Update the code label if re-entering
             if self._code_label:
-                self._code_label.configure(text=self._matching_code)
+                display_code = " ".join(self._matching_code)
+                self._code_label.configure(text=display_code)
 
         self._code_frame.pack(fill=tk.BOTH, expand=True)
+        self._refit_window()
 
     def update_relay_status(self, status: str) -> None:
         """Thread-safe update of the relay connection status.
@@ -333,13 +380,15 @@ class PairingDialog:
             if self._status_label is None:
                 return
             if status.startswith("error:"):
+                self._relay_connected = False
                 msg = status[6:]
                 self._status_label.configure(
-                    text=f"✗ {msg}", fg="#F44336"
+                    text=f"✗ {msg}", fg=ERR_RED
                 )
                 if self._retry_button is not None:
                     self._retry_button.pack(pady=(8, 0))
             else:
+                self._relay_connected = (status == "connected")
                 text, color = status_map.get(status, (status, TEXT_SECONDARY))
                 self._status_label.configure(text=text, fg=color)
                 if self._retry_button is not None:
@@ -368,11 +417,9 @@ class PairingDialog:
 
         win.protocol("WM_DELETE_WINDOW", lambda: win.withdraw())
 
-        # Enforce width and center on screen
-        win.update_idletasks()
-        w, h = win.winfo_width(), win.winfo_height()
-        sw, sh = win.winfo_screenwidth(), win.winfo_screenheight()
-        win.geometry(f"{WINDOW_WIDTH}x{h}+{(sw-WINDOW_WIDTH)//2}+{(sh-h)//2}")
+        # Center on screen, fit to content
+        win.minsize(WINDOW_WIDTH, 200)
+        self._refit_window()
 
         logger.info("Pairing dialog shown")
         win.mainloop()
@@ -402,7 +449,7 @@ class PairingDialog:
         qr = qrcode.QRCode(
             version=None,
             error_correction=qrcode.constants.ERROR_CORRECT_M,
-            box_size=10, border=4,
+            box_size=11, border=3,
         )
         qr.add_data(data)
         qr.make(fit=True)

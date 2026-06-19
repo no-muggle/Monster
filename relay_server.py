@@ -15,7 +15,8 @@ from websockets.asyncio.server import ServerConnection, serve
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 logger = logging.getLogger("relay")
-ALIVE_TIMEOUT = 120  # kill room after 2 min idle
+WAIT_TIMEOUT = 300   # host waits 5 min for client to join
+IDLE_TIMEOUT = 3600  # connected room idle timeout (1 hour, no practical limit)
 PORT = 8765
 
 
@@ -36,7 +37,7 @@ class Room:
             return
         try:
             while True:
-                msg = await asyncio.wait_for(self.client.recv(), timeout=ALIVE_TIMEOUT)
+                msg = await asyncio.wait_for(self.client.recv(), timeout=IDLE_TIMEOUT)
                 await self.host.send(msg)
         except (TimeoutError, asyncio.CancelledError):
             pass
@@ -109,16 +110,22 @@ class RelayServer:
         await ws.send(json.dumps({"type": "room_code", "code": code}))
         logger.info("Room %s: host connected", code)
 
-        # Wait for client to join
+        # Wait for client to join (with timeout)
         try:
+            waited = 0
             while not room.client:
                 await asyncio.sleep(1)
+                waited += 1
                 if not room.host:  # host disconnected
                     logger.info("Room %s: host left before client joined", code)
                     return
+                if waited >= WAIT_TIMEOUT:
+                    logger.info("Room %s: no client joined within %ds, closing", code, WAIT_TIMEOUT)
+                    await ws.send(json.dumps({"type": "error", "reason": "timeout"}))
+                    return
             # Client joined — send confirmation
             await ws.send(json.dumps({"type": "client_joined"}))
-            # Forward client → host
+            # Forward client → host (no idle timeout for connected rooms)
             await room.forward()
         except Exception:
             logger.info("Room %s: host disconnected", code)
@@ -126,9 +133,9 @@ class RelayServer:
             await room.cleanup()
 
     async def _handle_client(self, ws: ServerConnection, room_code: str):
+        import json
         room = self.rooms.get(room_code)
         if not room or not room.host:
-            import json
             await ws.send(json.dumps({"type": "error", "reason": "room_not_found"}))
             await ws.close()
             return
@@ -137,10 +144,13 @@ class RelayServer:
         self.client_to_room[ws] = room
         logger.info("Room %s: client joined", room_code)
 
+        # Send confirmation so Android knows it's connected
+        await ws.send(json.dumps({"type": "joined", "code": room_code}))
+
         # Forward host → client
         try:
             while True:
-                msg = await asyncio.wait_for(room.host.recv(), timeout=ALIVE_TIMEOUT)
+                msg = await asyncio.wait_for(room.host.recv(), timeout=IDLE_TIMEOUT)
                 await ws.send(msg)
         except (TimeoutError, asyncio.CancelledError):
             pass
@@ -158,4 +168,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass

@@ -57,16 +57,18 @@ class App:
         self._notifier = Notifier()
 
         self._server: WebSocketServer | None = None
-        if not self._use_relay:
-            self._server = WebSocketServer(self._host, self._port, self._token)
-            self._server.on_code_received = self._notifier.notify_code
-            self._server.on_client_connected = self._on_connected
-            self._server.on_client_disconnected = self._on_disconnected
+        # Always start LAN WebSocket server so QR code works
+        self._server = WebSocketServer(self._host, self._port, self._token)
+        self._server.on_code_received = self._notifier.notify_code
+        self._server.on_client_connected = self._on_connected
+        self._server.on_client_disconnected = self._on_disconnected
         self._tray = TrayIcon()
         self._dialog: PairingDialog | None = None
 
         self._loop: asyncio.AbstractEventLoop | None = None
         self._server_thread: threading.Thread | None = None
+        self._lan_loop: asyncio.AbstractEventLoop | None = None
+        self._lan_thread: threading.Thread | None = None
         self._shutdown_event = threading.Event()
 
         self._tray.on_show_qr = self._show_dialog
@@ -91,6 +93,8 @@ class App:
     def _on_disconnected(self) -> None:
         logger.info("Android client disconnected")
         self._tray.set_status(ConnectionStatus.WAITING)
+        if self._dialog:
+            self._dialog.update_relay_status("error:连接断开，请重试")
 
     def _add_firewall_rule(self) -> None:
         """Add a Windows Firewall inbound rule for the WebSocket port."""
@@ -148,69 +152,86 @@ class App:
 
     def _start_relay_with_code(self, code: str) -> None:
         """Start relay connection with a pre-generated matching code."""
-        if self._relay and self._relay.is_connected:
+        # Same code, already connected — nothing to do
+        if self._relay and self._relay.is_connected and self._relay.room_code == code:
             return
-        if self._server_thread and self._server_thread.is_alive():
-            return
+
+        # Stop old relay connection (if any) before starting a new one
+        if self._relay and self._loop and not self._loop.is_closed():
+            try:
+                asyncio.run_coroutine_threadsafe(self._relay.stop(), self._loop)
+            except Exception:
+                pass
+        self._relay = None
+        self._server_thread = None
+        self._loop = None
+
         if not self._relay_url:
             logger.error("No relay URL configured")
             if self._dialog:
                 self._dialog.update_relay_status("error:未配置中继服务器地址")
             return
 
-        self._relay = RelayHostClient(self._relay_url)
-        self._relay.on_message = self._on_relay_message
-        self._relay.on_connected = self._on_connected
-        self._relay.on_disconnected = self._on_disconnected
+        relay = RelayHostClient(self._relay_url)
+        relay.on_message = self._on_relay_message
+        relay.on_connected = self._on_connected
+        relay.on_disconnected = self._on_disconnected
+        self._relay = relay
 
-        self._loop = asyncio.new_event_loop()
+        loop = asyncio.new_event_loop()
+        self._loop = loop
+        dialog = self._dialog
 
         def relay_loop():
-            asyncio.set_event_loop(self._loop)
+            asyncio.set_event_loop(loop)
             try:
-                # Connect with pre-generated code
-                self._loop.run_until_complete(self._relay.start(code))
-                # Update dialog: waiting for client
-                if self._dialog:
-                    self._dialog.update_relay_status("waiting")
-                # Wait for client to join
-                self._loop.run_until_complete(self._relay.wait_for_client())
-                if self._dialog:
-                    self._dialog.update_relay_status("connected")
-                # Listen for messages
-                self._loop.create_task(self._relay.listen())
-                self._loop.run_forever()
+                loop.run_until_complete(relay.start(code))
+                if dialog:
+                    dialog.update_relay_status("waiting")
+                loop.run_until_complete(relay.wait_for_client())
+                if dialog:
+                    dialog.update_relay_status("connected")
+                loop.create_task(relay.listen())
+                loop.run_forever()
             except Exception as e:
-                logger.exception("Relay error")
-                if self._dialog:
-                    self._dialog.update_relay_status(f"error:连接失败 — {e}")
+                cls = type(e).__name__
+                if "ConnectionClosed" in cls:
+                    logger.debug("Relay connection closed: %s", e)
+                else:
+                    logger.exception("Relay error")
+                    if dialog:
+                        dialog.update_relay_status(f"error:连接失败 — {e}")
             finally:
-                pending = asyncio.all_tasks(self._loop)
+                pending = asyncio.all_tasks(loop)
                 for t in pending:
                     t.cancel()
-                self._loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
-                self._loop.close()
+                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                loop.close()
 
         self._server_thread = threading.Thread(target=relay_loop, daemon=True)
         self._server_thread.start()
 
-        # Show connecting status
-        if self._dialog:
-            self._dialog.update_relay_status("connecting")
+        if dialog:
+            dialog.update_relay_status("connecting")
 
     def _shutdown(self) -> None:
         """Graceful shutdown sequence."""
         logger.info("Shutting down...")
         self._shutdown_event.set()
 
-        # Stop the server
-        if self._loop is not None:
-            if self._use_relay and self._relay:
-                future = asyncio.run_coroutine_threadsafe(self._relay.stop(), self._loop)
-            elif self._server:
-                future = asyncio.run_coroutine_threadsafe(self._server.stop(), self._loop)
+        # Stop relay connection if active
+        if self._relay and self._loop and not self._loop.is_closed():
             try:
-                future.result(timeout=5)
+                future = asyncio.run_coroutine_threadsafe(self._relay.stop(), self._loop)
+                future.result(timeout=3)
+            except Exception:
+                pass
+
+        # Stop LAN WebSocket server
+        if self._lan_loop is not None and not self._lan_loop.is_closed():
+            try:
+                future = asyncio.run_coroutine_threadsafe(self._server.stop(), self._lan_loop)
+                future.result(timeout=3)
             except Exception:
                 pass
 
@@ -223,8 +244,34 @@ class App:
 
         logger.info("Shutdown complete")
 
+    def _start_lan_server(self) -> None:
+        """Start the LAN WebSocket server on its own event loop thread."""
+        self._lan_loop = asyncio.new_event_loop()
+
+        def lan_server_loop():
+            asyncio.set_event_loop(self._lan_loop)
+            try:
+                self._lan_loop.run_until_complete(self._server.start())
+                self._lan_loop.run_forever()
+            except Exception:
+                logger.exception("LAN server loop error")
+            finally:
+                pending = asyncio.all_tasks(self._lan_loop)
+                for t in pending:
+                    t.cancel()
+                self._lan_loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                self._lan_loop.close()
+
+        self._lan_thread = threading.Thread(target=lan_server_loop, daemon=True)
+        self._lan_thread.start()
+        logger.info("LAN WebSocket server started on ws://%s:%d", self._host, self._port)
+
     def run(self) -> None:
         logger.info("Starting SMS Sync...")
+
+        # Always start LAN WebSocket server so QR pairing is available
+        self._add_firewall_rule()
+        self._start_lan_server()
 
         if self._use_relay:
             logger.info("Mode: RELAY — %s", self._relay_url)
@@ -252,11 +299,9 @@ class App:
             self._shutdown()
 
     def _run_local(self) -> None:
-        """Local mode: start WebSocket server, show QR code."""
+        """Local mode: show QR code (LAN server already started by run())."""
         logger.info("LAN IP: %s, Port: %d", self._host, self._port)
         logger.info("PC Name: %s", self._server.pc_name)
-
-        self._add_firewall_rule()
 
         from .network.lan_ip import get_all_local_ips
         all_ips = get_all_local_ips()
@@ -265,25 +310,6 @@ class App:
 
         if self._host == "127.0.0.1":
             logger.warning("Could not detect LAN IP. Ensure you are on a network.")
-
-        self._loop = asyncio.new_event_loop()
-
-        def run_server_loop():
-            asyncio.set_event_loop(self._loop)
-            try:
-                self._loop.run_until_complete(self._server.start())
-                self._loop.run_forever()
-            except Exception:
-                logger.exception("Server loop error")
-            finally:
-                pending = asyncio.all_tasks(self._loop)
-                for t in pending:
-                    t.cancel()
-                self._loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
-                self._loop.close()
-
-        self._server_thread = threading.Thread(target=run_server_loop, daemon=True)
-        self._server_thread.start()
 
         self._tray.set_status(ConnectionStatus.WAITING)
         self._show_dialog()
@@ -297,7 +323,7 @@ class App:
 
 
 def main() -> None:
-    relay_url = ""
+    relay_url = "ws://101.37.15.16:8765"  # default cloud relay
     if "--relay" in sys.argv:
         idx = sys.argv.index("--relay")
         if idx + 1 < len(sys.argv):
@@ -307,4 +333,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass

@@ -80,6 +80,7 @@ class MainActivity : ComponentActivity() {
                     )
                 } else if (showRelay) {
                     RelayConnectScreen(
+                        connectionState = connState,
                         onConnect = { url, code -> onRelayConnect(url, code) },
                         onBack = { showRelay = false },
                     )
@@ -137,7 +138,7 @@ class MainActivity : ComponentActivity() {
         }
         startService(intent)
         ConnectionStateHolder.updateState(ConnectionState.CONNECTING)
-        showRelay = false
+        // RelayConnectScreen observes state and navigates back on success
     }
 
     private fun disconnectFromPc() {

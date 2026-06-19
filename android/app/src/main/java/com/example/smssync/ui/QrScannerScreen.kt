@@ -43,6 +43,9 @@ fun QrScannerScreen(
     val context = LocalContext.current
     var hasCameraPermission by remember { mutableStateOf(false) }
 
+    // Intercept system back gesture to go back to main screen instead of exiting
+    androidx.activity.compose.BackHandler { onBack() }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->

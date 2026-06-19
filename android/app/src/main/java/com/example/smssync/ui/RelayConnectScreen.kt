@@ -14,12 +14,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.smssync.data.ConnectionState
+import kotlinx.coroutines.delay
 
-private const val DEFAULT_RELAY_URL = "wss://your-server.com:8765"
+private const val DEFAULT_RELAY_URL = "ws://101.37.15.16:8765"
+private const val CONNECT_TIMEOUT_MS = 5000L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RelayConnectScreen(
+    connectionState: ConnectionState,
     onConnect: (relayUrl: String, roomCode: String) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -28,13 +32,48 @@ fun RelayConnectScreen(
     var roomCode by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var showAdvanced by remember { mutableStateOf(false) }
+    var isConnecting by remember { mutableStateOf(false) }
+    var connectingStartTime by remember { mutableStateOf(0L) }
+
+    // Intercept system back gesture
+    androidx.activity.compose.BackHandler { onBack() }
+
+    // Watch connection state: navigate back on success, show error on fail
+    LaunchedEffect(isConnecting, connectionState) {
+        if (!isConnecting || connectingStartTime == 0L) return@LaunchedEffect
+        when (connectionState) {
+            ConnectionState.CONNECTED -> {
+                delay(800)  // brief moment so user sees success
+                onBack()
+            }
+            ConnectionState.DISCONNECTED -> {
+                if (System.currentTimeMillis() - connectingStartTime > 500) {
+                    error = "连接失败，请检查匹配码是否正确"
+                    isConnecting = false
+                }
+            }
+            else -> {}
+        }
+    }
+
+    // 5-second timeout
+    LaunchedEffect(connectingStartTime) {
+        if (connectingStartTime == 0L) return@LaunchedEffect
+        delay(CONNECT_TIMEOUT_MS)
+        if (isConnecting && connectionState != ConnectionState.CONNECTED) {
+            error = "连接超时，请检查匹配码和服务器地址"
+            isConnecting = false
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("输入匹配码") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = {
+                        if (!isConnecting) onBack()
+                    }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "返回")
                     }
                 },
@@ -68,9 +107,9 @@ fun RelayConnectScreen(
                 placeholder = { Text("6 位数字") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
+                enabled = !isConnecting,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 trailingIcon = {
-                    // Paste button
                     IconButton(onClick = {
                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                         val clip = clipboard.primaryClip
@@ -108,10 +147,25 @@ fun RelayConnectScreen(
                     placeholder = { Text("wss://your-server.com:8765") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    enabled = !isConnecting,
                 )
             }
 
-            if (error != null) {
+            // Error or connecting status
+            if (isConnecting) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        "连接中...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            } else if (error != null) {
                 Text(
                     error!!,
                     color = MaterialTheme.colorScheme.error,
@@ -129,9 +183,13 @@ fun RelayConnectScreen(
                         error = "请输入 6 位匹配码"
                         return@Button
                     }
+                    isConnecting = true
+                    error = null
+                    connectingStartTime = System.currentTimeMillis()
                     onConnect(relayUrl.trim(), roomCode.trim())
                 },
                 modifier = Modifier.fillMaxWidth(),
+                enabled = !isConnecting,
             ) {
                 Icon(Icons.Default.Link, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
