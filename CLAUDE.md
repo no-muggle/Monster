@@ -1,4 +1,4 @@
-# SMS Sync — 手机验证码同步到 PC (v1.0)
+# SMS Sync — 手机验证码同步到 PC (v2.0)
 
 将 Android 手机收到的短信验证码实时同步到 Windows PC，自动复制到剪贴板并弹出 Windows Toast 通知。
 
@@ -18,7 +18,7 @@
 Android 端:
   ├─ SmsReceiver (RECEIVE_SMS 广播，静默)
   ├─ SmsAccessibilityService (无障碍，小米兜底)
-  ├─ CodeExtractor (11层正则 + 发送方提取)
+  ├─ CodeExtractor (10层正则 + 发送方提取，过滤非验证码短信）
   ├─ QR Scanner (CameraX + ML Kit)
   └─ Foreground Service (后台保活)
 
@@ -32,7 +32,7 @@ PC 端:
 - **通信**: JSON over WebSocket
 - **配对方式**:
   - 局域网：PC 生成二维码 (含 IP + 持久化 token) → 手机扫码
-  - 云服务器：PC 连接 VPS 获取 4 位房间码 → 手机输入房间码和服务器地址
+  - 云服务器：PC 自动生成 6 位匹配码 → 手机输入匹配码通过 VPS 中继配对
 - **心跳**: 30s ping/pong
 - **重连**: connectionId 追踪 + 指数退避
 
@@ -51,14 +51,13 @@ PC 端:
 ```
 messsge/
 ├── CLAUDE.md
-├── requirements.txt
-├── run.bat
-├── launcher.py                    # PyInstaller 入口
-├── relay_server.py                # 云服务器中继 (部署到 VPS)
-├── test_connection.py             # PC 端网络诊断
-├── SmsSync-v1.0.exe              # PC 端单文件 (30 MB)
-├── sms-sync-v1.0.apk             # Android 安装包 (36 MB)
-├── src/
+├── pc/
+│   ├── requirements.txt
+│   ├── run.bat
+│   ├── launcher.py                # PyInstaller 入口
+│   ├── relay_server.py            # 云服务器中继 (部署到 VPS)
+│   ├── test_connection.py         # PC 端网络诊断
+│   └── src/
 │   ├── main.py                    # 入口 (+ 防火墙 + --relay 参数)
 │   ├── server/
 │   │   ├── websocket_server.py    # WS 服务端 + token 验证
@@ -102,19 +101,20 @@ messsge/
 ### PC 端
 
 ```bash
-pip install -r requirements.txt     # 首次安装依赖
-python -m src.main                  # 局域网模式
-python -m src.main --relay wss://VPS:8765  # 云服务器模式
+cd pc && pip install -r requirements.txt     # 首次安装依赖
+cd pc && python -m src.main                  # 局域网模式
+cd pc && python -m src.main --relay wss://VPS:8765  # 云服务器模式
 python test_connection.py           # 诊断网络
 python relay_server.py              # 启动中继服务器 (在 VPS 上)
 
-python -m PyInstaller --onefile --console --name "SmsSync" \
+cd pc && python -m PyInstaller --onefile --noconsole --name "SmsSync" \
   --icon assets/icon.ico --hidden-import tkinter --hidden-import PIL \
   --hidden-import pystray --hidden-import pyperclip --hidden-import qrcode \
   --hidden-import websockets --hidden-import windows_toasts \
   --hidden-import src --hidden-import src.main --hidden-import src.server \
   --hidden-import src.notification --hidden-import src.ui \
-  --hidden-import src.network --hidden-import src.config launcher.py
+  --hidden-import src.network --hidden-import src.config \
+  --hidden-import src.ui.pairing_dialog launcher.py
 ```
 
 ### Android 端
@@ -143,7 +143,7 @@ nohup python relay_server.py > relay.log 2>&1 &
 # 确保防火墙开放 8765 端口
 
 # PC 端
-SmsSync-v1.0.exe --relay wss://VPS_IP:8765
+SmsSync-v2.0.exe --relay wss://VPS_IP:8765
 # 弹窗显示 4 位房间码
 
 # 手机端

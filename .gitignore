@@ -1,0 +1,36 @@
+# Build artifacts
+*.exe
+*.apk
+dist/
+build/
+*.spec
+__pycache__/
+*.pyc
+*.pyo
+
+# Android build
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+*.egg-info/
+.eggs/
+venv/
+relay-venv/
+
+# Logs
+*.log
+
+# Superpowers artifacts
+.superpowers/
