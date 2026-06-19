@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -92,11 +93,29 @@ fun MainScreen(
 
             Spacer(Modifier.weight(1f))
             if (connectionState == ConnectionState.CONNECTED) {
-                OutlinedButton(onClick = onDisconnectClick, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.LinkOff, null); Spacer(Modifier.width(8.dp)); Text("断开连接") }
+                OutlinedButton(
+                    onClick = onDisconnectClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Icon(Icons.Default.LinkOff, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("断开连接")
+                }
             } else {
-                Button(onClick = onScanQrClick, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.QrCodeScanner, null); Spacer(Modifier.width(8.dp)); Text("扫描二维码连接") }
-                Spacer(Modifier.height(6.dp))
-                OutlinedButton(onClick = onRelayClick, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.Cloud, null); Spacer(Modifier.width(8.dp)); Text("云服务器连接") }
+                PairingCard(
+                    icon = { Icon(Icons.Default.QrCodeScanner, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp)) },
+                    title = "扫描二维码",
+                    subtitle = "同一 WiFi 扫码配对",
+                    onClick = onScanQrClick,
+                )
+                Spacer(Modifier.height(8.dp))
+                PairingCard(
+                    icon = { Icon(Icons.Default.Key, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp)) },
+                    title = "输入匹配码",
+                    subtitle = "输入 6 位数字码配对",
+                    onClick = onRelayClick,
+                )
             }
             Spacer(Modifier.height(8.dp))
         }
@@ -150,6 +169,38 @@ private fun HistoryItem(entry: CodeEntry, onCopy: () -> Unit, onSend: () -> Unit
             }
             IconButton(onClick = onSend) { Icon(Icons.Default.Send, "发送", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp)) }
             IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, "删除", tint = Color(0xFFF44336).copy(alpha = 0.6f), modifier = Modifier.size(18.dp)) }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PairingCard(
+    icon: @Composable () -> Unit,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+) {
+    OutlinedCard(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)),
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            icon()
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+            }
+            Icon(
+                Icons.Default.ChevronRight, contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+            )
         }
     }
 }
