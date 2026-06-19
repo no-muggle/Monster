@@ -7,8 +7,6 @@ import logging
 import random
 import tkinter as tk
 from collections.abc import Callable
-from typing import Literal
-
 import qrcode
 from PIL import Image, ImageTk
 
@@ -200,7 +198,8 @@ class PairingDialog:
 
     def _show_qr_screen(self) -> None:
         """Show the LAN QR code screen."""
-        self._mode_frame.pack_forget()
+        if self._mode_frame:
+            self._mode_frame.pack_forget()
 
         if self._qr_frame is None:
             self._qr_frame = tk.Frame(self._window, bg=BODY_BG)
@@ -254,7 +253,8 @@ class PairingDialog:
 
     def _show_code_screen(self) -> None:
         """Show the matching code display screen."""
-        self._mode_frame.pack_forget()
+        if self._mode_frame:
+            self._mode_frame.pack_forget()
 
         if self._code_frame is None:
             self._code_frame = tk.Frame(self._window, bg=BODY_BG)
@@ -353,11 +353,11 @@ class PairingDialog:
 
         win.protocol("WM_DELETE_WINDOW", lambda: win.withdraw())
 
-        # Center on screen
+        # Enforce width and center on screen
         win.update_idletasks()
         w, h = win.winfo_width(), win.winfo_height()
         sw, sh = win.winfo_screenwidth(), win.winfo_screenheight()
-        win.geometry(f"+{(sw-w)//2}+{(sh-h)//2}")
+        win.geometry(f"{WINDOW_WIDTH}x{h}+{(sw-WINDOW_WIDTH)//2}+{(sh-h)//2}")
 
         logger.info("Pairing dialog shown")
         win.mainloop()
