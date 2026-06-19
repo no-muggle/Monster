@@ -1,0 +1,329 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.example.smssync"
+4    android:versionCode="1"
+5    android:versionName="1.0.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="26"
+9        android:targetSdkVersion="34" />
+10
+11    <!-- SMS permissions: RECEIVE_SMS for broadcasts, READ_SMS for content provider -->
+12    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+12-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:5:5-70
+12-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:5:22-67
+13    <uses-permission android:name="android.permission.READ_SMS" />
+13-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:6:5-67
+13-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:6:22-64
+14    <uses-permission android:name="android.permission.INTERNET" />
+14-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:7:5-67
+14-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:7:22-64
+15    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+15-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:8:5-79
+15-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:8:22-76
+16    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+16-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:9:5-76
+16-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:9:22-73
+17    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+17-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:10:5-77
+17-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:10:22-74
+18    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+18-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:11:5-87
+18-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:11:22-84
+19    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+19-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:12:5-77
+19-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:12:22-74
+20    <uses-permission android:name="android.permission.CAMERA" />
+20-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:13:5-65
+20-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:13:22-62
+21    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+21-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:14:5-95
+21-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:14:22-92
+22
+23    <permission
+23-->[androidx.core:core:1.12.0] C:\Users\cuibo\.gradle\caches\transforms-3\97415b8e2c2b19b88cea32d17b874052\transformed\core-1.12.0\AndroidManifest.xml:22:5-24:47
+24        android:name="com.example.smssync.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+24-->[androidx.core:core:1.12.0] C:\Users\cuibo\.gradle\caches\transforms-3\97415b8e2c2b19b88cea32d17b874052\transformed\core-1.12.0\AndroidManifest.xml:23:9-81
+25        android:protectionLevel="signature" />
+25-->[androidx.core:core:1.12.0] C:\Users\cuibo\.gradle\caches\transforms-3\97415b8e2c2b19b88cea32d17b874052\transformed\core-1.12.0\AndroidManifest.xml:24:9-44
+26
+27    <uses-permission android:name="com.example.smssync.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+27-->[androidx.core:core:1.12.0] C:\Users\cuibo\.gradle\caches\transforms-3\97415b8e2c2b19b88cea32d17b874052\transformed\core-1.12.0\AndroidManifest.xml:26:5-97
+27-->[androidx.core:core:1.12.0] C:\Users\cuibo\.gradle\caches\transforms-3\97415b8e2c2b19b88cea32d17b874052\transformed\core-1.12.0\AndroidManifest.xml:26:22-94
+28
+29    <application
+29-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:16:5-70:19
+30        android:allowBackup="true"
+30-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:17:9-35
+31        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+31-->[androidx.core:core:1.12.0] C:\Users\cuibo\.gradle\caches\transforms-3\97415b8e2c2b19b88cea32d17b874052\transformed\core-1.12.0\AndroidManifest.xml:28:18-86
+32        android:debuggable="true"
+33        android:extractNativeLibs="false"
+34        android:icon="@mipmap/ic_launcher"
+34-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:18:9-43
+35        android:label="@string/app_name"
+35-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:19:9-41
+36        android:supportsRtl="true"
+36-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:20:9-35
+37        android:theme="@style/Theme.SmsSync"
+37-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:21:9-45
+38        android:usesCleartextTraffic="true" >
+38-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:22:9-44
+39        <activity
+39-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:24:9-32:20
+40            android:name="com.example.smssync.MainActivity"
+40-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:25:13-41
+41            android:exported="true"
+41-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:26:13-36
+42            android:theme="@style/Theme.SmsSync" >
+42-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:27:13-49
+43            <intent-filter>
+43-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:28:13-31:29
+44                <action android:name="android.intent.action.MAIN" />
+44-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:29:17-69
+44-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:29:25-66
+45
+46                <category android:name="android.intent.category.LAUNCHER" />
+46-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:30:17-77
+46-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:30:27-74
+47            </intent-filter>
+48        </activity>
+49        <activity
+49-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:34:9-38:49
+50            android:name="com.example.smssync.service.SmsConsentActivity"
+50-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:35:13-55
+51            android:excludeFromRecents="true"
+51-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:38:13-46
+52            android:exported="false"
+52-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:36:13-37
+53            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+53-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:37:13-72
+54
+55        <service
+55-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:40:9-43:40
+56            android:name="com.example.smssync.service.WebSocketService"
+56-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:41:13-53
+57            android:exported="false"
+57-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:43:13-37
+58            android:foregroundServiceType="dataSync" />
+58-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:42:13-53
+59
+60        <!-- SMS_RECEIVED: used when RECEIVE_SMS permission is granted -->
+61        <receiver
+61-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:47:9-53:20
+62            android:name="com.example.smssync.service.SmsReceiver"
+62-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:48:13-48
+63            android:exported="true" >
+63-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:49:13-36
+64            <intent-filter android:priority="999" >
+64-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:50:13-52:29
+64-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:50:28-50
+65                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+65-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:51:17-82
+65-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:51:25-79
+66            </intent-filter>
+67        </receiver>
+68
+69        <!-- Accessibility: reads SMS notifications, works even when SMS broadcast blocked -->
+70        <service
+70-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:56:9-66:19
+71            android:name="com.example.smssync.service.SmsAccessibilityService"
+71-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:57:13-60
+72            android:exported="true"
+72-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:59:13-36
+73            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" >
+73-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:58:13-79
+74            <intent-filter>
+74-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:60:13-62:29
+75                <action android:name="android.accessibilityservice.AccessibilityService" />
+75-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:61:17-92
+75-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:61:25-89
+76            </intent-filter>
+77
+78            <meta-data
+78-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:63:13-65:72
+79                android:name="android.accessibilityservice"
+79-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:64:17-60
+80                android:resource="@xml/accessibility_service_config" />
+80-->D:\Projects\messsge\android\app\src\main\AndroidManifest.xml:65:17-69
+81        </service>
+82        <service
+82-->[androidx.camera:camera-camera2:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\ce4a468a22526ad841d98d044aec7b16\transformed\camera-camera2-1.3.0\AndroidManifest.xml:24:9-33:19
+83            android:name="androidx.camera.core.impl.MetadataHolderService"
+83-->[androidx.camera:camera-camera2:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\ce4a468a22526ad841d98d044aec7b16\transformed\camera-camera2-1.3.0\AndroidManifest.xml:25:13-75
+84            android:enabled="false"
+84-->[androidx.camera:camera-camera2:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\ce4a468a22526ad841d98d044aec7b16\transformed\camera-camera2-1.3.0\AndroidManifest.xml:26:13-36
+85            android:exported="false" >
+85-->[androidx.camera:camera-camera2:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\ce4a468a22526ad841d98d044aec7b16\transformed\camera-camera2-1.3.0\AndroidManifest.xml:27:13-37
+86            <meta-data
+86-->[androidx.camera:camera-camera2:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\ce4a468a22526ad841d98d044aec7b16\transformed\camera-camera2-1.3.0\AndroidManifest.xml:30:13-32:89
+87                android:name="androidx.camera.core.impl.MetadataHolderService.DEFAULT_CONFIG_PROVIDER"
+87-->[androidx.camera:camera-camera2:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\ce4a468a22526ad841d98d044aec7b16\transformed\camera-camera2-1.3.0\AndroidManifest.xml:31:17-103
+88                android:value="androidx.camera.camera2.Camera2Config$DefaultProvider" />
+88-->[androidx.camera:camera-camera2:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\ce4a468a22526ad841d98d044aec7b16\transformed\camera-camera2-1.3.0\AndroidManifest.xml:32:17-86
+89        </service>
+90        <service
+90-->[com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\66d08add067fb5cadf9e2875f2a6421b\transformed\play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:9:9-15:19
+91            android:name="com.google.mlkit.common.internal.MlKitComponentDiscoveryService"
+91-->[com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\66d08add067fb5cadf9e2875f2a6421b\transformed\play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:10:13-91
+92            android:directBootAware="true"
+92-->[com.google.mlkit:common:18.9.0] C:\Users\cuibo\.gradle\caches\transforms-3\44ab0317151ba2141d3b0b389ee16779\transformed\common-18.9.0\AndroidManifest.xml:17:13-43
+93            android:exported="false" >
+93-->[com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\66d08add067fb5cadf9e2875f2a6421b\transformed\play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:11:13-37
+94            <meta-data
+94-->[com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\66d08add067fb5cadf9e2875f2a6421b\transformed\play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:12:13-14:85
+95                android:name="com.google.firebase.components:com.google.mlkit.vision.barcode.internal.BarcodeRegistrar"
+95-->[com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\66d08add067fb5cadf9e2875f2a6421b\transformed\play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:13:17-120
+96                android:value="com.google.firebase.components.ComponentRegistrar" />
+96-->[com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\66d08add067fb5cadf9e2875f2a6421b\transformed\play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:14:17-82
+97            <meta-data
+97-->[com.google.mlkit:vision-common:17.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\7e21c05c8b4a1a0ae8ae17e13e5af6e5\transformed\vision-common-17.3.0\AndroidManifest.xml:12:13-14:85
+98                android:name="com.google.firebase.components:com.google.mlkit.vision.common.internal.VisionCommonRegistrar"
+98-->[com.google.mlkit:vision-common:17.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\7e21c05c8b4a1a0ae8ae17e13e5af6e5\transformed\vision-common-17.3.0\AndroidManifest.xml:13:17-124
+99                android:value="com.google.firebase.components.ComponentRegistrar" />
+99-->[com.google.mlkit:vision-common:17.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\7e21c05c8b4a1a0ae8ae17e13e5af6e5\transformed\vision-common-17.3.0\AndroidManifest.xml:14:17-82
+100            <meta-data
+100-->[com.google.mlkit:common:18.9.0] C:\Users\cuibo\.gradle\caches\transforms-3\44ab0317151ba2141d3b0b389ee16779\transformed\common-18.9.0\AndroidManifest.xml:20:13-22:85
+101                android:name="com.google.firebase.components:com.google.mlkit.common.internal.CommonComponentRegistrar"
+101-->[com.google.mlkit:common:18.9.0] C:\Users\cuibo\.gradle\caches\transforms-3\44ab0317151ba2141d3b0b389ee16779\transformed\common-18.9.0\AndroidManifest.xml:21:17-120
+102                android:value="com.google.firebase.components.ComponentRegistrar" />
+102-->[com.google.mlkit:common:18.9.0] C:\Users\cuibo\.gradle\caches\transforms-3\44ab0317151ba2141d3b0b389ee16779\transformed\common-18.9.0\AndroidManifest.xml:22:17-82
+103        </service>
+104
+105        <provider
+105-->[com.google.mlkit:common:18.9.0] C:\Users\cuibo\.gradle\caches\transforms-3\44ab0317151ba2141d3b0b389ee16779\transformed\common-18.9.0\AndroidManifest.xml:9:9-13:38
+106            android:name="com.google.mlkit.common.internal.MlKitInitProvider"
+106-->[com.google.mlkit:common:18.9.0] C:\Users\cuibo\.gradle\caches\transforms-3\44ab0317151ba2141d3b0b389ee16779\transformed\common-18.9.0\AndroidManifest.xml:10:13-78
+107            android:authorities="com.example.smssync.mlkitinitprovider"
+107-->[com.google.mlkit:common:18.9.0] C:\Users\cuibo\.gradle\caches\transforms-3\44ab0317151ba2141d3b0b389ee16779\transformed\common-18.9.0\AndroidManifest.xml:11:13-69
+108            android:exported="false"
+108-->[com.google.mlkit:common:18.9.0] C:\Users\cuibo\.gradle\caches\transforms-3\44ab0317151ba2141d3b0b389ee16779\transformed\common-18.9.0\AndroidManifest.xml:12:13-37
+109            android:initOrder="99" />
+109-->[com.google.mlkit:common:18.9.0] C:\Users\cuibo\.gradle\caches\transforms-3\44ab0317151ba2141d3b0b389ee16779\transformed\common-18.9.0\AndroidManifest.xml:13:13-35
+110
+111        <activity
+111-->[com.google.android.gms:play-services-base:18.1.0] C:\Users\cuibo\.gradle\caches\transforms-3\620126ca2cdcf24d740fdd00fc985d7d\transformed\play-services-base-18.1.0\AndroidManifest.xml:20:9-22:45
+112            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+112-->[com.google.android.gms:play-services-base:18.1.0] C:\Users\cuibo\.gradle\caches\transforms-3\620126ca2cdcf24d740fdd00fc985d7d\transformed\play-services-base-18.1.0\AndroidManifest.xml:20:19-85
+113            android:exported="false"
+113-->[com.google.android.gms:play-services-base:18.1.0] C:\Users\cuibo\.gradle\caches\transforms-3\620126ca2cdcf24d740fdd00fc985d7d\transformed\play-services-base-18.1.0\AndroidManifest.xml:22:19-43
+114            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+114-->[com.google.android.gms:play-services-base:18.1.0] C:\Users\cuibo\.gradle\caches\transforms-3\620126ca2cdcf24d740fdd00fc985d7d\transformed\play-services-base-18.1.0\AndroidManifest.xml:21:19-78
+115
+116        <meta-data
+116-->[com.google.android.gms:play-services-basement:18.1.0] C:\Users\cuibo\.gradle\caches\transforms-3\c1ecfcfbc8925166ba8430d8f095e367\transformed\play-services-basement-18.1.0\AndroidManifest.xml:21:9-23:69
+117            android:name="com.google.android.gms.version"
+117-->[com.google.android.gms:play-services-basement:18.1.0] C:\Users\cuibo\.gradle\caches\transforms-3\c1ecfcfbc8925166ba8430d8f095e367\transformed\play-services-basement-18.1.0\AndroidManifest.xml:22:13-58
+118            android:value="@integer/google_play_services_version" />
+118-->[com.google.android.gms:play-services-basement:18.1.0] C:\Users\cuibo\.gradle\caches\transforms-3\c1ecfcfbc8925166ba8430d8f095e367\transformed\play-services-basement-18.1.0\AndroidManifest.xml:23:13-66
+119
+120        <activity
+120-->[androidx.compose.ui:ui-test-manifest:1.5.4] C:\Users\cuibo\.gradle\caches\transforms-3\d20042d050fc364349db20cbff2939f7\transformed\ui-test-manifest-1.5.4\AndroidManifest.xml:23:9-25:39
+121            android:name="androidx.activity.ComponentActivity"
+121-->[androidx.compose.ui:ui-test-manifest:1.5.4] C:\Users\cuibo\.gradle\caches\transforms-3\d20042d050fc364349db20cbff2939f7\transformed\ui-test-manifest-1.5.4\AndroidManifest.xml:24:13-63
+122            android:exported="true" />
+122-->[androidx.compose.ui:ui-test-manifest:1.5.4] C:\Users\cuibo\.gradle\caches\transforms-3\d20042d050fc364349db20cbff2939f7\transformed\ui-test-manifest-1.5.4\AndroidManifest.xml:25:13-36
+123        <activity
+123-->[androidx.compose.ui:ui-tooling-android:1.5.4] C:\Users\cuibo\.gradle\caches\transforms-3\4ffcbc66200c42685fdfdff8e66eea42\transformed\ui-tooling-release\AndroidManifest.xml:23:9-25:39
+124            android:name="androidx.compose.ui.tooling.PreviewActivity"
+124-->[androidx.compose.ui:ui-tooling-android:1.5.4] C:\Users\cuibo\.gradle\caches\transforms-3\4ffcbc66200c42685fdfdff8e66eea42\transformed\ui-tooling-release\AndroidManifest.xml:24:13-71
+125            android:exported="true" />
+125-->[androidx.compose.ui:ui-tooling-android:1.5.4] C:\Users\cuibo\.gradle\caches\transforms-3\4ffcbc66200c42685fdfdff8e66eea42\transformed\ui-tooling-release\AndroidManifest.xml:25:13-36
+126
+127        <provider
+127-->[androidx.emoji2:emoji2:1.4.0] C:\Users\cuibo\.gradle\caches\transforms-3\c801f521caaed5c5afbacab50f0d275e\transformed\emoji2-1.4.0\AndroidManifest.xml:24:9-32:20
+128            android:name="androidx.startup.InitializationProvider"
+128-->[androidx.emoji2:emoji2:1.4.0] C:\Users\cuibo\.gradle\caches\transforms-3\c801f521caaed5c5afbacab50f0d275e\transformed\emoji2-1.4.0\AndroidManifest.xml:25:13-67
+129            android:authorities="com.example.smssync.androidx-startup"
+129-->[androidx.emoji2:emoji2:1.4.0] C:\Users\cuibo\.gradle\caches\transforms-3\c801f521caaed5c5afbacab50f0d275e\transformed\emoji2-1.4.0\AndroidManifest.xml:26:13-68
+130            android:exported="false" >
+130-->[androidx.emoji2:emoji2:1.4.0] C:\Users\cuibo\.gradle\caches\transforms-3\c801f521caaed5c5afbacab50f0d275e\transformed\emoji2-1.4.0\AndroidManifest.xml:27:13-37
+131            <meta-data
+131-->[androidx.emoji2:emoji2:1.4.0] C:\Users\cuibo\.gradle\caches\transforms-3\c801f521caaed5c5afbacab50f0d275e\transformed\emoji2-1.4.0\AndroidManifest.xml:29:13-31:52
+132                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+132-->[androidx.emoji2:emoji2:1.4.0] C:\Users\cuibo\.gradle\caches\transforms-3\c801f521caaed5c5afbacab50f0d275e\transformed\emoji2-1.4.0\AndroidManifest.xml:30:17-75
+133                android:value="androidx.startup" />
+133-->[androidx.emoji2:emoji2:1.4.0] C:\Users\cuibo\.gradle\caches\transforms-3\c801f521caaed5c5afbacab50f0d275e\transformed\emoji2-1.4.0\AndroidManifest.xml:31:17-49
+134            <meta-data
+134-->[androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\cuibo\.gradle\caches\transforms-3\d4de7dc948072acc4cc255689ad91615\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:29:13-31:52
+135                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+135-->[androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\cuibo\.gradle\caches\transforms-3\d4de7dc948072acc4cc255689ad91615\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:30:17-78
+136                android:value="androidx.startup" />
+136-->[androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\cuibo\.gradle\caches\transforms-3\d4de7dc948072acc4cc255689ad91615\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:31:17-49
+137            <meta-data
+137-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:29:13-31:52
+138                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+138-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:30:17-85
+139                android:value="androidx.startup" />
+139-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:31:17-49
+140        </provider>
+141
+142        <service
+142-->[com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\cuibo\.gradle\caches\transforms-3\655c06e7c7ae0d4a752221dbac8b1281\transformed\transport-backend-cct-2.3.3\AndroidManifest.xml:29:9-35:19
+143            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
+143-->[com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\cuibo\.gradle\caches\transforms-3\655c06e7c7ae0d4a752221dbac8b1281\transformed\transport-backend-cct-2.3.3\AndroidManifest.xml:30:13-103
+144            android:exported="false" >
+144-->[com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\cuibo\.gradle\caches\transforms-3\655c06e7c7ae0d4a752221dbac8b1281\transformed\transport-backend-cct-2.3.3\AndroidManifest.xml:31:13-37
+145            <meta-data
+145-->[com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\cuibo\.gradle\caches\transforms-3\655c06e7c7ae0d4a752221dbac8b1281\transformed\transport-backend-cct-2.3.3\AndroidManifest.xml:32:13-34:39
+146                android:name="backend:com.google.android.datatransport.cct.CctBackendFactory"
+146-->[com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\cuibo\.gradle\caches\transforms-3\655c06e7c7ae0d4a752221dbac8b1281\transformed\transport-backend-cct-2.3.3\AndroidManifest.xml:33:17-94
+147                android:value="cct" />
+147-->[com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\cuibo\.gradle\caches\transforms-3\655c06e7c7ae0d4a752221dbac8b1281\transformed\transport-backend-cct-2.3.3\AndroidManifest.xml:34:17-36
+148        </service>
+149        <service
+149-->[com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\cuibo\.gradle\caches\transforms-3\454410a3565660638e4f326096d407a7\transformed\transport-runtime-2.2.6\AndroidManifest.xml:26:9-30:19
+150            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
+150-->[com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\cuibo\.gradle\caches\transforms-3\454410a3565660638e4f326096d407a7\transformed\transport-runtime-2.2.6\AndroidManifest.xml:27:13-117
+151            android:exported="false"
+151-->[com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\cuibo\.gradle\caches\transforms-3\454410a3565660638e4f326096d407a7\transformed\transport-runtime-2.2.6\AndroidManifest.xml:28:13-37
+152            android:permission="android.permission.BIND_JOB_SERVICE" >
+152-->[com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\cuibo\.gradle\caches\transforms-3\454410a3565660638e4f326096d407a7\transformed\transport-runtime-2.2.6\AndroidManifest.xml:29:13-69
+153        </service>
+154
+155        <receiver
+155-->[com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\cuibo\.gradle\caches\transforms-3\454410a3565660638e4f326096d407a7\transformed\transport-runtime-2.2.6\AndroidManifest.xml:32:9-34:40
+156            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+156-->[com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\cuibo\.gradle\caches\transforms-3\454410a3565660638e4f326096d407a7\transformed\transport-runtime-2.2.6\AndroidManifest.xml:33:13-132
+157            android:exported="false" />
+157-->[com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\cuibo\.gradle\caches\transforms-3\454410a3565660638e4f326096d407a7\transformed\transport-runtime-2.2.6\AndroidManifest.xml:34:13-37
+158        <receiver
+158-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:34:9-52:20
+159            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+159-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:35:13-76
+160            android:directBootAware="false"
+160-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:36:13-44
+161            android:enabled="true"
+161-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:37:13-35
+162            android:exported="true"
+162-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:38:13-36
+163            android:permission="android.permission.DUMP" >
+163-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:39:13-57
+164            <intent-filter>
+164-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:40:13-42:29
+165                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+165-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:17-91
+165-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:25-88
+166            </intent-filter>
+167            <intent-filter>
+167-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:43:13-45:29
+168                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+168-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:17-85
+168-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:25-82
+169            </intent-filter>
+170            <intent-filter>
+170-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:46:13-48:29
+171                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+171-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:17-88
+171-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:25-85
+172            </intent-filter>
+173            <intent-filter>
+173-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:49:13-51:29
+174                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+174-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:17-95
+174-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cuibo\.gradle\caches\transforms-3\2589b19b8e6a297e3d4989675197a625\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:25-92
+175            </intent-filter>
+176        </receiver>
+177    </application>
+178
+179</manifest>
