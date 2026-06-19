@@ -36,17 +36,23 @@ class RelayHostClient:
     def is_connected(self) -> bool:
         return self._running and self._ws is not None
 
-    async def start(self):
-        """Connect to relay and get a room code."""
+    async def start(self, code: str):
+        """Connect to relay and register with a pre-generated room code.
+
+        Args:
+            code: 6-digit room code generated locally.
+        """
+        self._room_code = code
         self._ws = await connect(self._relay_url)
-        # Register as host
-        await self._ws.send(json.dumps({"type": "host"}))
-        # Wait for room code
+        # Register as host with pre-generated code
+        await self._ws.send(json.dumps({"type": "host", "code": code}))
+        # Wait for confirmation
         raw = await asyncio.wait_for(self._ws.recv(), timeout=10)
         data = json.loads(raw)
+        if data.get("type") == "error":
+            raise Exception(f"Relay rejected code: {data.get('reason')}")
         if data.get("type") != "room_code":
             raise Exception(f"Expected room_code, got {data}")
-        self._room_code = data["code"]
         self._running = True
         logger.info("Relay host connected, room: %s", self._room_code)
         if self.on_code_received:
