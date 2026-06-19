@@ -37,9 +37,9 @@ def _make_icon_image(color: str, size: int = 64) -> Image.Image:
         A PIL Image of a colored circle.
     """
     color_map = {
-        "green": "#4CAF50",
-        "yellow": "#FF9800",
-        "red": "#F44336",
+        "stopped": "#F44336",   # red
+        "waiting": "#FF9800",   # yellow
+        "connected": "#4CAF50", # green
     }
     fill = color_map.get(color, color)
 

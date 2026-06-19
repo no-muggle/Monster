@@ -11,30 +11,30 @@
 │                      局域网模式 (默认)                            │
 │  Android App ←→ WebSocket (局域网) ←→ PC Server (Python)        │
 │                                                                  │
-│                      云服务器模式 (--relay)                       │
+│                      云服务器模式 (默认中继)                       │
 │  Android App ←→ 公网 VPS 中继 ←→ PC Client (Python)             │
 └──────────────────────────────────────────────────────────────────┘
 
 Android 端:
   ├─ SmsReceiver (RECEIVE_SMS 广播，静默)
   ├─ SmsAccessibilityService (无障碍，小米兜底)
-  ├─ CodeExtractor (10层正则 + 发送方提取，过滤非验证码短信）
+  ├─ CodeExtractor (10层正则 + 发送方提取，过滤非验证码短信)
   ├─ QR Scanner (CameraX + ML Kit)
-  └─ Foreground Service (后台保活)
+  └─ Foreground Service (后台保活 + 断联自动重连)
 
 PC 端:
-  ├─ Clipboard (pyperclip) + Windows Toast 通知
-  ├─ QR 码 / 房间码 弹窗 (tkinter)
-  ├─ System Tray (pystray, 绿/黄/红 状态)
-  └─ 云服务器中继客户端 (可选)
+  ├─ Clipboard (pyperclip) + Windows Toast (windows_toasts)
+  ├─ 双模式配对弹窗 — 二维码 / 6位匹配码 (tkinter 暗色主题)
+  ├─ System Tray (pystray, 红/黄/绿 状态)
+  └─ 云服务器中继客户端 (默认 ws://101.37.15.16:8765)
 ```
 
 - **通信**: JSON over WebSocket
 - **配对方式**:
   - 局域网：PC 生成二维码 (含 IP + 持久化 token) → 手机扫码
-  - 云服务器：PC 自动生成 6 位匹配码 → 手机输入匹配码通过 VPS 中继配对
-- **心跳**: 30s ping/pong
-- **重连**: connectionId 追踪 + 指数退避
+  - 匹配码：PC 自动生成 6 位匹配码 → 手机输入 → VPS 中继配对
+- **心跳**: 30s ping/pong (LAN)，中继模式依赖 WebSocket keep-alive
+- **重连**: connectionId 追踪 + 指数退避，重启自动重连 (LAN)
 
 ## 短信接收方案
 
@@ -51,49 +51,51 @@ PC 端:
 ```
 messsge/
 ├── CLAUDE.md
-├── pc/
+├── README.md
+├── .gitignore
+├── docs/                          # 设计文档
+├── pc/                            # PC 端 (Python)
 │   ├── requirements.txt
 │   ├── run.bat
 │   ├── launcher.py                # PyInstaller 入口
 │   ├── relay_server.py            # 云服务器中继 (部署到 VPS)
 │   ├── test_connection.py         # PC 端网络诊断
 │   └── src/
-│   ├── main.py                    # 入口 (+ 防火墙 + --relay 参数)
-│   ├── server/
-│   │   ├── websocket_server.py    # WS 服务端 + token 验证
-│   │   ├── message_handler.py     # JSON 协议解析
-│   │   └── relay_client.py        # 云服务器中继客户端 (host 端)
-│   ├── notification/
-│   │   └── notifier.py            # 剪贴板 + Windows Toast
-│   ├── ui/
-│   │   ├── tray_icon.py           # 系统托盘 (绿/黄/红)
-│   │   ├── qr_dialog.py           # QR 码 / 房间码弹窗
-│   │   └── code_popup.py          # 验证码弹窗 (已弃用)
-│   ├── network/lan_ip.py          # 局域网 IP 检测
-│   └── config/settings.py         # Token 持久化 + 配置管理
-├── tests/
-└── android/                       # Android Studio 打开
-    ├── gradle/wrapper/
+│       ├── main.py                # 入口 (LAN 始终运行 + --relay 参数)
+│       ├── server/
+│       │   ├── websocket_server.py # WS 服务端 + token 验证
+│       │   ├── message_handler.py  # JSON 协议解析
+│       │   └── relay_client.py     # 云服务器中继客户端 (host 端)
+│       ├── notification/
+│       │   └── notifier.py         # 剪贴板 + Windows Toast
+│       ├── ui/
+│       │   ├── tray_icon.py        # 系统托盘 (红/黄/绿)
+│       │   ├── pairing_dialog.py   # 双模式配对弹窗 (v2.0 暗色主题)
+│       │   ├── qr_dialog.py        # 旧版 QR 弹窗 (已弃用)
+│       │   └── code_popup.py       # 验证码弹窗 (已弃用)
+│       ├── network/lan_ip.py       # 局域网 IP 检测
+│       └── config/settings.py      # Token 持久化 + 配置管理
+└── android/                        # Android 端 (Kotlin + Compose)
     └── app/src/main/java/com/example/smssync/
-        ├── MainActivity.kt        # 入口 (自动启动服务 + 主题持久化)
+        ├── MainActivity.kt         # 入口 (自动启动服务 + 主题持久化)
         ├── service/
-        │   ├── WebSocketService.kt    # 前台服务 (WS + SMS 监听 + 状态轮询)
-        │   ├── SmsReceiver.kt         # RECEIVE_SMS 广播接收
-        │   ├── SmsAccessibilityService.kt  # 无障碍读通知 (过滤自包)
+        │   ├── WebSocketService.kt     # 前台服务 (WS + SMS + 自动重连)
+        │   ├── SmsReceiver.kt          # RECEIVE_SMS 广播接收
+        │   ├── SmsAccessibilityService.kt  # 无障碍读通知
         │   └── SmsRetrieverReceiver.kt     # Consent API (已弃用)
         ├── network/
-        │   ├── WebSocketClient.kt     # OkHttp WS + relay + connectionId
+        │   ├── WebSocketClient.kt      # OkHttp WS + relay + connectionId
         │   └── MessageProtocol.kt
-        ├── sms/CodeExtractor.kt       # 11层正则: 验证码/口令/动态码...
+        ├── sms/CodeExtractor.kt        # 10层正则: 验证码/口令/动态码...
         ├── ui/
-        │   ├── MainScreen.kt          # 主界面 + 权限卡片 + 历史 + 暗色主题
-        │   ├── QrScannerScreen.kt     # 扫码
-        │   ├── RelayConnectScreen.kt  # 云服务器连接 (房间码)
-        │   └── theme/                 # Material 3 (黑/亮)
+        │   ├── MainScreen.kt           # 主界面 + 权限卡片 + 双卡片配对
+        │   ├── QrScannerScreen.kt      # 扫码 (BackHandler 拦截)
+        │   ├── RelayConnectScreen.kt   # 6位匹配码 + 折叠高级 + 粘贴 + 5s超时
+        │   └── theme/                  # Material 3 (暗/亮)
         └── data/
             ├── Models.kt
-            ├── PreferencesManager.kt      # DataStore (含主题 + 配对)
-            └── ConnectionStateHolder.kt   # 共享状态 + 历史持久化
+            ├── PreferencesManager.kt   # DataStore (含 relay 持久化)
+            └── ConnectionStateHolder.kt # 共享状态 + 历史持久化
 ```
 
 ## 常用命令
@@ -101,14 +103,16 @@ messsge/
 ### PC 端
 
 ```bash
-cd pc && pip install -r requirements.txt     # 首次安装依赖
-cd pc && python -m src.main                  # 局域网模式
-cd pc && python -m src.main --relay wss://VPS:8765  # 云服务器模式
-python test_connection.py           # 诊断网络
-python relay_server.py              # 启动中继服务器 (在 VPS 上)
+cd pc && pip install -r requirements.txt    # 首次安装依赖
+python -m src.main                          # 局域网模式 (默认连云中继)
+python -m src.main --relay ws://VPS:8765    # 指定云服务器
+python test_connection.py                   # 诊断网络
+python relay_server.py                      # 启动中继服务器 (在 VPS 上)
 
-cd pc && python -m PyInstaller --onefile --noconsole --name "SmsSync" \
-  --icon assets/icon.ico --hidden-import tkinter --hidden-import PIL \
+# 打包
+cd pc && rm -rf build dist __pycache__ src/__pycache__ src/*/__pycache__ *.spec
+python -m PyInstaller --onefile --noconsole --name "SmsSync" --clean \
+  --icon ../assets/icon.ico --hidden-import tkinter --hidden-import PIL \
   --hidden-import pystray --hidden-import pyperclip --hidden-import qrcode \
   --hidden-import websockets --hidden-import windows_toasts \
   --hidden-import src --hidden-import src.main --hidden-import src.server \
@@ -129,7 +133,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk   # 安装
 ### ADB 调试
 
 ```bash
-adb logcat | grep -i "WebSocket\|SmsA11y\|SmsReceiver"
+adb logcat | grep -i "WebSocketService\|WebSocketClient\|SmsA11y\|SmsReceiver"
 adb shell dumpsys activity services com.example.smssync     # 服务状态
 adb shell dumpsys package com.example.smssync | grep SMS    # 权限
 ```
@@ -138,28 +142,48 @@ adb shell dumpsys package com.example.smssync | grep SMS    # 权限
 
 ```bash
 # 在 VPS 上
-pip install websockets
-nohup python relay_server.py > relay.log 2>&1 &
-# 确保防火墙开放 8765 端口
+pip install websockets --break-system-packages
+nohup python3 relay_server.py > relay.log 2>&1 &
+
+# 阿里云 ECS 安全组开放 TCP 8765 (入方向)
+# 查看日志: tail -f relay.log
 
 # PC 端
-SmsSync-v2.0.exe --relay wss://VPS_IP:8765
-# 弹窗显示 4 位房间码
+SmsSync-v2.0.exe                    # 默认连接 ws://101.37.15.16:8765
+SmsSync-v2.0.exe --relay ws://VPS:8765  # 指定中继地址
 
 # 手机端
-# APP → 云服务器连接 → 输入服务器地址 + 房间码 → 连接
+# APP → 输入匹配码 → 配对 (服务器地址在"高级设置"中)
 ```
 
 ## 关键技术决策
+
+### 双模式配对 (v2.0)
+- PC 对话框同时支持局域网二维码和匹配码
+- 匹配码由 PC 本地生成 6 位随机数，通过中继服务器注册
+- LAN 服务器始终运行，QR 扫码和匹配码可同时使用
+- 匹配码有效期 5 分钟 (仅等配对阶段)，连接后不会因空闲超时
 
 ### token 持久化
 - `get_or_create_token()` 保存到 `%APPDATA%/sms-sync/pairing_token.txt`
 - 重启 PC token 不变，无需重新扫码
 
+### Android 配对持久化与自动重连
+- LAN 配对信息持久化到 DataStore，APP 重启后自动重连
+- 中继匹配码为一次性，断联后自动清除配对信息
+
 ### connectionId 防冲突
 - `WebSocketClient.connect()` 递增 `connectionId`
 - 回调中 `isCurrent()` 检查，旧连接事件不影响新连接
 - `handleConnect()` 先 `disconnect()` 再 `connect()`
+
+### 中继线程安全
+- `relay_loop` 闭包使用局部变量捕获 `relay`/`loop`/`dialog`，避免二次生成时 `self._relay` 被覆盖
+- `update_relay_status()` 通过 `window.after(0,...)` 线程安全更新 UI
+
+### X 按钮行为
+- 点击关闭弹确认框 "关闭窗口会退出程序，是否继续？"
+- 确认后彻底退出 (不残留进程)
 
 ### Python 3.9 兼容
 - 所有文件 `from __future__ import annotations`
@@ -173,7 +197,9 @@ SmsSync-v2.0.exe --relay wss://VPS_IP:8765
 - 无障碍掉线: 界面橙色提示 + 5分钟自动检测
 
 ### 验证码识别 (CodeExtractor)
-11 层有序正则策略: 验证码/短信口令/口令/动态码/校验码/安全码/授权码/英文 code-otp-pin/独立数字
+10 层有序正则策略: 验证码/短信口令/口令/动态码/校验码/安全码/授权码/英文 code-otp-pin/验证码后置/授权码
+
+已移除独立数字匹配 (Strategy 11)，避免银行通知等非验证码短信误发送
 
 ### 历史记录持久化
 - 保存到 `sms_history.json`，最多 5 条
@@ -195,12 +221,19 @@ SmsSync-v2.0.exe --relay wss://VPS_IP:8765
 | PC 连不上 | 管理员运行 `netsh advfirewall firewall add rule name="SMS Sync" dir=in action=allow protocol=TCP localport=9876` |
 | 手机连不上 | 同一 WiFi、关 AP 隔离、关移动数据 |
 | Token 失效 | 删除 `%APPDATA%/sms-sync/pairing_token.txt` 重新扫码 |
-| 断联后连不上 | 强制停止 APP 重开，扫码即可 |
-| 小米收不到验证码 | 开 RECEIVE_SMS + 无障碍服务 |
+| 小米收不到验证码 | 开 RECEIVE_SMS + 无障碍服务，锁定 APP + 电池无限制 |
 | 无障碍掉线 | 小米杀后台，锁定 APP + 电池无限制 |
-| 手动连接没跳转 | onQrScanned 未设置 showManual=false |
-| 中继无房间码 | 确认 VPS relay_server.py 运行中，端口开放 |
-| PC 日志刷 ConnectionClosed | 正常 WiFi 断流，已降级为 DEBUG |
+| 中继连不上 | 确认 VPS relay_server.py 运行中，安全组开放 8765 |
+| 匹配码连接超时 | 5 秒超时自动提示，检查匹配码是否正确 |
+| PC 关闭后进程残留 | 点 X 确认退出，或托盘右键退出 |
+| Toast 不弹 | 关闭其他 SmsSync 进程 (端口冲突)，确认通知权限开启 |
+| 非验证码短信误发 | v2.0 已修复，只发含验证码关键词的短信 |
+
+## 发布
+
+- GitHub: https://github.com/no-muggle/Monster
+- Releases: https://github.com/no-muggle/Monster/releases
+- 中继服务器: ws://101.37.15.16:8765
 
 ## 环境要求
 

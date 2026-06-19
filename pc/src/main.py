@@ -144,8 +144,9 @@ class App:
                     pc_name=self._server.pc_name if self._server else self._host,
                     relay_url=self._relay_url,
                 )
-                # Wire matching code callback
+                # Wire callbacks
                 self._dialog.on_start_relay = self._start_relay_with_code
+                self._dialog.on_quit = self._shutdown
             self._dialog.show()
         except Exception:
             logger.exception("Failed to show pairing dialog")
@@ -290,6 +291,8 @@ class App:
         logger.info("Mode: RELAY — %s", self._relay_url)
         self._tray.set_status(ConnectionStatus.WAITING)
         self._show_dialog()
+        if self._shutdown_event.is_set():
+            return
 
         try:
             self._tray.run()
@@ -313,6 +316,8 @@ class App:
 
         self._tray.set_status(ConnectionStatus.WAITING)
         self._show_dialog()
+        if self._shutdown_event.is_set():
+            return
 
         try:
             self._tray.run()

@@ -91,7 +91,11 @@ class WebSocketService : Service() {
                     ConnectionState.CONNECTED -> "已连接 — 等待验证码..."
                     ConnectionState.CONNECTING -> "连接中..."
                     ConnectionState.RECONNECTING -> "重连中..."
-                    ConnectionState.DISCONNECTED -> "未连接 — 请扫码配对"
+                    ConnectionState.DISCONNECTED -> {
+                        // Relay room codes are single-use — clear on disconnect
+                        preferencesManager.clearIfRelay()
+                        "未连接 — 请扫码配对"
+                    }
                 }
                 updateNotification(text)
             }
@@ -126,14 +130,19 @@ class WebSocketService : Service() {
             ACTION_CODE_EXTRACTED -> handleCodeExtracted(intent)
             ACTION_STOP -> handleStop()
             else -> {
-                // Service started without action — auto-connect if paired
+                // Service started without action — auto-reconnect using saved pairing
                 serviceScope?.launch(Dispatchers.IO) {
                     preferencesManager.savedPairing.collect { saved ->
-                        if (saved.isComplete && saved.autoConnect) {
-                            val info = saved.toPairingInfo()!!
-                            Log.i(TAG, "Auto-connecting to ${info.wsUrl}")
+                        if (!saved.isComplete || !saved.autoConnect) return@collect
+                        cancel() // only try once
+
+                        if (saved.isRelay) {
+                            Log.i(TAG, "Auto-reconnecting via relay: ${saved.relayUrl} room=${saved.roomCode}")
+                            webSocketClient.connectRelay(saved.relayUrl, saved.roomCode)
+                        } else {
+                            val info = saved.toPairingInfo() ?: return@collect
+                            Log.i(TAG, "Auto-reconnecting to ${info.wsUrl}")
                             webSocketClient.connect(info)
-                            cancel()
                         }
                     }
                 }
@@ -205,6 +214,11 @@ class WebSocketService : Service() {
         webSocketClient.connectRelay(relayUrl, roomCode)
         ConnectionStateHolder.updateState(ConnectionState.CONNECTING)
         updateNotification("连接云服务器...")
+
+        // Persist relay pairing for auto-reconnect
+        serviceScope?.launch(Dispatchers.IO) {
+            preferencesManager.saveRelayPairing(relayUrl, roomCode)
+        }
     }
 
     private fun handleDisconnect() {

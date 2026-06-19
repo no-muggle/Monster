@@ -6,6 +6,7 @@ import json
 import logging
 import random
 import tkinter as tk
+from tkinter import messagebox
 from collections.abc import Callable
 import qrcode
 from PIL import Image, ImageTk
@@ -62,6 +63,7 @@ class PairingDialog:
 
         # Callbacks
         self.on_start_relay: Callable[[str], None] | None = None
+        self.on_quit: Callable[[], None] | None = None
 
     # ------------------------------------------------------------------
     # Window sizing
@@ -415,7 +417,13 @@ class PairingDialog:
         self._window = win
         self._show_mode_selection()
 
-        win.protocol("WM_DELETE_WINDOW", lambda: win.withdraw())
+        def on_close():
+            if messagebox.askyesno("退出 SMS Sync", "关闭窗口会退出程序，是否继续？", default="no"):
+                win.destroy()
+                if self.on_quit:
+                    self.on_quit()
+
+        win.protocol("WM_DELETE_WINDOW", on_close)
 
         # Center on screen, fit to content
         win.minsize(WINDOW_WIDTH, 200)
